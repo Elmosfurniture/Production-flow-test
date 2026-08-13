@@ -183,11 +183,37 @@ const styles = `
 .wcv .break-row .label { font-size: 11px; color: var(--ink-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
 .wcv .break-row .duration { font-size: 11px; color: var(--ink-3); font-weight: 600; font-variant-numeric: tabular-nums; }
 
+/* ── Phones & small tablets ──────────────────────────────────
+   The dense desktop grid can't survive a phone: seven columns of content
+   squeezed into three left the part name as an ellipsis and pushed the
+   Start button out of its cell. Reflow into stacked lines instead —
+   line 1 carries sequence / time / order / qty, line 2 the part name,
+   line 3 a full-width action button that's easy to hit with a thumb. */
 @media (max-width: 860px) {
   .wcv .mc-head { grid-template-columns: 18px 1fr auto; gap: 12px; padding: 14px 14px 14px 18px; }
   .wcv .mc-head .num-stack, .wcv .mc-head .mini-progress { display: none; }
-  .wcv .row { grid-template-columns: 24px 84px 1fr; }
-  .wcv .row .ord-pri, .wcv .row .parts { display: none; }
+
+  .wcv .row {
+    display: flex; flex-wrap: wrap; align-items: center;
+    column-gap: 10px; row-gap: 7px; padding: 12px 14px;
+  }
+  .wcv .row .reorder { order: 0; width: auto; }
+  .wcv .row .seq { order: 1; }
+  .wcv .row .when { order: 2; white-space: nowrap; }
+  .wcv .row .ord-pri { order: 3; flex-direction: row; align-items: baseline; gap: 6px; }
+  .wcv .row .parts { order: 4; margin-left: auto; flex-direction: row; align-items: baseline; gap: 6px; min-width: 0; }
+  .wcv .row .parts .count { font-size: 22px; }
+  .wcv .row .parts .rate-label { margin-top: 0; }
+  .wcv .row .info { order: 5; flex: 1 1 100%; }
+  .wcv .row .info .part { white-space: normal; }
+  .wcv .row .action, .wcv .row .action-pair { order: 6; flex: 1 1 100%; }
+  .wcv .action-pair { display: flex; justify-self: auto; }
+  .wcv .action-pair .action { flex: 1; min-width: 0; }
+
+  .wcv .break-row {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 8px 12px; padding: 10px 14px;
+  }
 }
 
 /* Segmented view toggle */
