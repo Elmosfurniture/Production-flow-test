@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>elmo's Production — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* Light defaults */
+    --bg: #f4f2ee;
+    --bg-2: #ece1e0;
+    --surface: #ffffff;
+    --surface-2: #fbf9f5;
+    --ink: #1a1d24;
+    --ink-2: #4a4e5a;
+    --ink-3: #8a8e99;
+    --hairline: rgba(26,29,36,0.08);
+    --hairline-2: rgba(26,29,36,0.12);
+
+    --navy: #1f2a44;
+    --navy-2: #2a3656;
+    --navy-ink: #ffffff;
+
+    --amber: #e89a3c;
+    --amber-2: #f0ae5c;
+    --amber-soft: rgba(232,154,60,0.12);
+
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.04), 0 8px 24px rgba(26,29,36,0.06), 0 24px 48px rgba(26,29,36,0.06);
+    --shadow-btn: 0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 16px rgba(31,42,68,0.28), 0 2px 4px rgba(31,42,68,0.18);
+
+    --radius-card: 28px;
+    --radius-chip: 14px;
+    --radius-input: 16px;
+    --radius-btn: 18px;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0e1118;
+    --bg-2: #131722;
+    --surface: #1a1f2c;
+    --surface-2: #232938;
+    --ink: #f1f2f5;
+    --ink-2: #b8bcc8;
+    --ink-3: #7c8090;
+    --hairline: rgba(255,255,255,0.08);
+    --hairline-2: rgba(255,255,255,0.14);
+
+    --navy: #2e3d63;
+    --navy-2: #3a4b76;
+    --navy-ink: #ffffff;
+
+    --amber: #f0ae5c;
+    --amber-2: #f5c178;
+    --amber-soft: rgba(240,174,92,0.14);
+
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px rgba(0,0,0,0.4), 0 24px 60px rgba(0,0,0,0.45);
+    --shadow-btn: 0 1px 0 rgba(255,255,255,0.12) inset, 0 6px 16px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100vh;
+    font-family: 'Inter', -apple-system, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+    letter-spacing: -0.01em;
+  }
+
+  /* Backgrounds (variants) */
+  .stage {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stage[data-bg="plain"] {
+    background: var(--bg);
+  }
+  .stage[data-bg="gradient"] {
+    background:
+      radial-gradient(120% 80% at 50% 0%, var(--surface-2) 0%, var(--bg) 40%, var(--bg-2) 100%);
+  }
+  .stage[data-bg="noise"] {
+    background: var(--bg);
+  }
+  .stage[data-bg="noise"]::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.5'/></svg>");
+    mix-blend-mode: multiply;
+    opacity: 0.06;
+  }
+  [data-theme="dark"] .stage[data-bg="noise"]::before { mix-blend-mode: screen; opacity: 0.08; }
+
+  .stage[data-bg="glow"] {
+    background:
+      radial-gradient(60% 50% at 50% 18%, var(--amber-soft) 0%, transparent 60%),
+      radial-gradient(120% 80% at 50% 100%, var(--bg-2) 0%, var(--bg) 60%);
+  }
+
+  /* Phone frame (no bezel — just proportions) */
+  .phone {
+    width: min(420px, 100%);
+    aspect-ratio: 9 / 19.5;
+    max-height: 92vh;
+    background: var(--surface);
+    border-radius: 44px;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--hairline);
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+
+  /* iOS status bar */
+  .statusbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 28px 0;
+    font-weight: 600; font-size: 15px;
+    color: var(--ink);
+  }
+  .statusbar .right { display: flex; gap: 6px; align-items: center; opacity: 0.95; }
+  .statusbar svg { display: block; }
+
+  .home-indicator {
+    width: 134px; height: 5px; border-radius: 100px;
+    background: var(--ink); opacity: 0.9;
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  }
+  [data-theme="dark"] .home-indicator { background: var(--ink); opacity: 0.7; }
+
+  /* Layout inside phone */
+  .screen {
+    flex: 1;
+    padding: 28px 22px 36px;
+    display: flex; flex-direction: column;
+    overflow: auto;
+    -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  /* Hero */
+  .hero {
+    display: flex; flex-direction: column; align-items: center;
+    margin-top: 10px; margin-bottom: 18px;
+  }
+  .logo-mark {
+    width: 64px; height: 64px;
+    border-radius: 18px;
+    background: var(--surface);
+    border: 1px solid var(--hairline-2);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 1px 2px rgba(26,29,36,0.06), 0 6px 14px rgba(26,29,36,0.06);
+    margin-bottom: 14px;
+  }
+  [data-theme="dark"] .logo-mark { background: var(--surface-2); }
+  .logo-mark svg { display: block; }
+
+  .brand-name {
+    font-size: 22px; font-weight: 600; letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .brand-name em {
+    font-style: normal;
+    color: var(--amber);
+  }
+  .greeting {
+    margin-top: 14px; text-align: center;
+  }
+  .greeting .h {
+    font-size: 26px; font-weight: 600; letter-spacing: -0.025em;
+    color: var(--ink); line-height: 1.15;
+  }
+  .greeting .sub {
+    font-size: 15px; color: var(--ink-2); margin-top: 4px; line-height: 1.35;
+  }
+
+  /* Sheet card */
+  .sheet {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-card);
+    padding: 18px 16px 20px;
+    box-shadow: var(--shadow-card);
+    display: flex; flex-direction: column; gap: 14px;
+    margin-top: 8px;
+  }
+
+  .label {
+    font-size: 12px; font-weight: 600; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-left: 4px;
+  }
+
+  /* Department grid */
+  .dept-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .chip {
+    appearance: none; border: 0; cursor: pointer;
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-chip);
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.01em;
+    transition: transform 120ms ease, background 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
+    text-align: left;
+  }
+  .chip:hover { background: var(--surface); border-color: var(--hairline-2); }
+  .chip:active { transform: scale(0.985); }
+  .chip .icon {
+    width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-2);
+    flex: 0 0 24px;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--navy);
+    color: var(--navy-ink);
+    border-color: var(--navy);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 6px 14px rgba(31,42,68,0.22);
+  }
+  .chip[aria-pressed="true"] .icon { color: var(--amber-2); }
+
+  /* Role: segmented */
+  .segment {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    padding: 4px;
+    gap: 2px;
+    position: relative;
+  }
+  .segment .seg {
+    appearance: none; border: 0; background: transparent;
+    padding: 9px 8px;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--ink-2);
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: -0.01em;
+    transition: color 200ms ease;
+  }
+  .segment .seg[aria-pressed="true"] {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.06), 0 2px 6px rgba(26,29,36,0.06);
+    font-weight: 600;
+  }
+  [data-theme="dark"] .segment .seg[aria-pressed="true"] {
+    background: var(--surface);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 6px rgba(0,0,0,0.4);
+  }
+
+  /* PIN pad */
+  .pin-display {
+    display: flex; gap: 12px; align-items: center; justify-content: center;
+    padding: 6px 0 4px;
+  }
+  .pin-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--surface-2);
+    border: 1.5px solid var(--hairline-2);
+    transition: background 180ms ease, transform 180ms ease, border-color 180ms ease;
+  }
+  .pin-dot.filled {
+    background: var(--navy);
+    border-color: var(--navy);
+    transform: scale(1.05);
+  }
+  .pin-dot.error { background: #d2533a; border-color: #d2533a; animation: shake 360ms; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0) scale(1.05); }
+    25% { transform: translateX(-4px) scale(1.05); }
+    75% { transform: translateX(4px) scale(1.05); }
+  }
+
+  .pin-pad {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-top: 4px;
+  }
+  .pin-key {
+    appearance: none; border: 1px solid var(--hairline);
+    background: var(--surface-2);
+    color: var(--ink);
+    height: 56px; border-radius: 16px;
+    font-family: inherit; font-size: 22px; font-weight: 500;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: transform 100ms ease, background 180ms ease;
+  }
+  .pin-key small {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.18em;
+    color: var(--ink-3); margin-top: 2px;
+  }
+  .pin-key:hover { background: var(--surface); }
+  .pin-key:active { transform: scale(0.96); background: var(--surface); }
+  .pin-key.ghost { background: transparent; border-color: transparent; box-shadow: none; }
+  .pin-key.ghost:hover { background: var(--surface-2); }
+  .pin-key.del { color: var(--ink-2); }
+
+  /* Big sign-in button */
+  .signin {
+    appearance: none; border: 0;
+    width: 100%;
+    background: var(--navy);
+    color: var(--navy-ink);
+    padding: 16px 18px;
+    border-radius: var(--radius-btn);
+    font-family: inherit; font-size: 17px; font-weight: 600;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    box-shadow: var(--shadow-btn);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: transform 120ms ease, background 200ms ease, opacity 200ms ease;
+  }
+  .signin:hover { background: var(--navy-2); }
+  .signin:active { transform: scale(0.99); }
+  .signin[disabled] { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+  .signin .arrow { transition: transform 240ms ease; }
+  .signin:not([disabled]):hover .arrow { transform: translateX(3px); }
+
+  /* Footer */
+  .foot {
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 13px;
+    margin-top: 18px;
+  }
+  .foot a {
+    color: var(--ink-2); text-decoration: none; font-weight: 500;
+    border-bottom: 1px dashed var(--hairline-2);
+    padding-bottom: 1px;
+  }
+  .foot a:hover { color: var(--amber); border-color: var(--amber); }
+
+  .meta-strip {
+    display: flex; justify-content: space-between; align-items: center;
+    margin: 8px 4px 14px;
+    font-size: 12px; color: var(--ink-3);
+    font-weight: 500;
+  }
+  .meta-strip .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    font-weight: 500; color: var(--ink-2);
+  }
+  .meta-strip .pill .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #4caf6a;
+  }
+
+  /* Variant strip header (visible when bg=explore) */
+  .explore-header {
+    text-align: center;
+    margin-bottom: 24px;
+    color: var(--ink-2);
+  }
+  .explore-header h1 {
+    font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink);
+    margin: 0 0 4px;
+  }
+  .explore-header p { margin: 0; font-size: 14px; color: var(--ink-3); }
+
+  .explore-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 32px;
+    max-width: 1700px; margin: 0 auto;
+    padding: 24px 24px 60px;
+    align-items: start;
+    justify-items: center;
+  }
+  .variant-stage {
+    width: 100%;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .variant-label {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .variant-label .dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); margin-right: 6px; vertical-align: middle;
+  }
+  .variant-shell {
+    width: 100%;
+    border-radius: 32px;
+    padding: 16px;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 800px;
+  }
+  .variant-shell[data-bg="plain"] { background: #f4f2ee; }
+  .variant-shell[data-bg="gradient"] { background: radial-gradient(120% 80% at 50% 0%, #fbf9f5 0%, #f4f2ee 40%, #ece8e0 100%); }
+  .variant-shell[data-bg="noise"] { background: #f4f2ee; position: relative; overflow: hidden; }
+  .variant-shell[data-bg="noise"]::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.5'/></svg>");
+    mix-blend-mode: multiply; opacity: 0.06;
+  }
+  .variant-shell[data-bg="glow"] {
+    background:
+      radial-gradient(50% 40% at 50% 22%, rgba(232,154,60,0.14) 0%, transparent 60%),
+      radial-gradient(120% 80% at 50% 100%, #ece8e0 0%, #f4f2ee 60%);
+  }
+
+  /* Mode toggle */
+  .mode-pill {
+    position: fixed; top: 20px; left: 20px; z-index: 50;
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 4px;
+    display: flex; gap: 2px;
+    box-shadow: var(--shadow-card);
+  }
+  .mode-pill button {
+    appearance: none; border: 0; background: transparent;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    color: var(--ink-2);
+    padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    letter-spacing: -0.01em;
+  }
+  .mode-pill button[aria-pressed="true"] {
+    background: var(--ink); color: var(--bg);
+    font-weight: 600;
+  }
+
+  /* Compact tablet/mobile */
+  @media (max-width: 520px) {
+    .phone { border-radius: 36px; aspect-ratio: auto; max-height: none; min-height: 100vh; width: 100%; }
+    .stage { padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<div id="root"></div>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useMemo } = React;
+
+/* ──────────────── Icons (Lucide-style, hand-tuned) ──────────────── */
+const Icon = ({ name, size = 22, stroke = 2 }) => {
+  const props = {
+    width: size, height: size, viewBox: "0 0 24 24",
+    fill: "none", stroke: "currentColor", strokeWidth: stroke,
+    strokeLinecap: "round", strokeLinejoin: "round"
+  };
+  switch (name) {
+    case 'hammer': return (
+      <svg {...props}>
+        <path d="M15 12 9.5 17.5a2.121 2.121 0 0 1-3-3L12 9"/>
+        <path d="M17.64 15 22 10.64"/>
+        <path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/>
+      </svg>
+    );
+    case 'saw': return (
+      <svg {...props}>
+        <path d="M3 6 L7 10 L4 13 L8 17 L5 20"/>
+        <path d="M10 4 14 8 11 11 15 15 12 18 16 22"/>
+        <path d="M18 4 21 7 18.5 9.5 21 12"/>
+      </svg>
+    );
+    case 'thread': return (
+      <svg {...props}>
+        <path d="M5.5 4.5 L5.5 14 a3 3 0 0 0 6 0 L11.5 7 a2 2 0 0 1 4 0 L15.5 16 a4 4 0 0 1-8 0"/>
+        <circle cx="5.5" cy="4.5" r="1.2"/>
+        <path d="M16 18 18.5 21"/>
+      </svg>
+    );
+    case 'truck': return (
+      <svg {...props}>
+        <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+        <path d="M15 18H9"/>
+        <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
+        <circle cx="17" cy="18" r="2"/>
+        <circle cx="7" cy="18" r="2"/>
+      </svg>
+    );
+    case 'arrow': return (
+      <svg {...props}><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+    );
+    case 'face-id': return (
+      <svg {...props}>
+        <path d="M4 8V6a2 2 0 0 1 2-2h2"/>
+        <path d="M16 4h2a2 2 0 0 1 2 2v2"/>
+        <path d="M20 16v2a2 2 0 0 1-2 2h-2"/>
+        <path d="M8 20H6a2 2 0 0 1-2-2v-2"/>
+        <path d="M9 9v2"/>
+        <path d="M15 9v2"/>
+        <path d="M9 16s1 1.5 3 1.5S15 16 15 16"/>
+      </svg>
+    );
+    case 'delete-key': return (
+      <svg {...props}>
+        <path d="M21 5H9.5a2 2 0 0 0-1.5.7L3 12l5 6.3a2 2 0 0 0 1.5.7H21a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z"/>
+        <path d="m18 9-6 6"/><path d="m12 9 6 6"/>
+      </svg>
+    );
+    case 'clock': return (
+      <svg {...props}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    );
+    case 'shield': return (
+      <svg {...props}><path d="M12 3 4 6v6c0 4.5 3.2 8.4 8 9 4.8-.6 8-4.5 8-9V6l-8-3Z"/></svg>
+    );
+    default: return null;
+  }
+};
+
+/* ──────────────── Logo (variant 4 — geometric peak/valley silhouette) ──────────────── */
+function LogoMark({ size = 64 }) {
+  // Soft white tile with navy peak/valley silhouette + warm amber sun dot.
+  const r = 18 * (size/64);
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-label="elmo's Production logo">
+      <defs>
+        <linearGradient id="lg-tile" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff"/>
+          <stop offset="100%" stopColor="#f6f3ec"/>
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="60" height="60" rx={r} fill="url(#lg-tile)" stroke="rgba(26,29,36,0.10)"/>
+      <circle cx="44" cy="22" r="5" fill="var(--amber)"/>
+      <path d="M6 46 L20 28 L28 38 L40 22 L52 46 Z" fill="var(--navy)"/>
+      <rect x="6" y="46" width="46" height="2" rx="1" fill="var(--navy)" opacity="0.25"/>
+    </svg>
+  );
+}
+
+/* ──────────────── PIN pad ──────────────── */
+const PIN_LENGTH = 4;
+function PinPad({ value, onChange, onSubmit, error }) {
+  const press = (n) => {
+    if (value.length >= PIN_LENGTH) return;
+    onChange(value + n);
+  };
+  const del = () => onChange(value.slice(0, -1));
+
+  // auto-submit when filled
+  useEffect(() => {
+    if (value.length === PIN_LENGTH) {
+      const t = setTimeout(() => onSubmit && onSubmit(), 180);
+      return () => clearTimeout(t);
+    }
+  }, [value]);
+
+  // keyboard
+  useEffect(() => {
+    const onKey = (e) => {
+      if (/^[0-9]$/.test(e.key)) press(e.key);
+      else if (e.key === 'Backspace') del();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [value]);
+
+  const letters = { '2':'ABC','3':'DEF','4':'GHI','5':'JKL','6':'MNO','7':'PQRS','8':'TUV','9':'WXYZ' };
+
+  return (
+    <div>
+      <div className="pin-display">
+        {[0,1,2,3].map(i => (
+          <span key={i} className={`pin-dot ${i < value.length ? 'filled' : ''} ${error ? 'error' : ''}`} />
+        ))}
+      </div>
+      <div className="pin-pad">
+        {['1','2','3','4','5','6','7','8','9'].map(n => (
+          <button key={n} className="pin-key" onClick={() => press(n)} aria-label={`Digit ${n}`}>
+            <span>{n}</span>
+            {letters[n] ? <small>{letters[n]}</small> : <small>&nbsp;</small>}
+          </button>
+        ))}
+        <button className="pin-key ghost" tabIndex={-1} aria-hidden="true"></button>
+        <button className="pin-key" onClick={() => press('0')} aria-label="Digit 0">
+          <span>0</span><small>&nbsp;</small>
+        </button>
+        <button className="pin-key ghost del" onClick={del} aria-label="Delete">
+          <Icon name="delete-key" size={22} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────── Login Screen ──────────────── */
+function LoginScreen({ background = 'gradient', dark = false, headless = false }) {
+  const [dept, setDept] = useState('upholstery');
+  const [role, setRole] = useState('worker');
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  const greeting = useMemo(() => {
+    const h = now.getHours();
+    if (h < 5) return "still up,";
+    if (h < 12) return "good morning,";
+    if (h < 17) return "good afternoon,";
+    if (h < 21) return "good evening,";
+    return "good night,";
+  }, [now]);
+
+  const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const shift = useMemo(() => {
+    const h = now.getHours();
+    if (h >= 6 && h < 14) return 'Shift A · Plant 2';
+    if (h >= 14 && h < 22) return 'Shift B · Plant 2';
+    return 'Night · Plant 2';
+  }, [now]);
+
+  const submit = () => {
+    if (pin.length !== PIN_LENGTH) return;
+    if (pin === '0000') { // dummy fail
+      setError(true);
+      setTimeout(() => { setError(false); setPin(''); }, 600);
+      return;
+    }
+    setLoading(true);
+    setTimeout(() => setLoading(false), 1400);
+  };
+
+  const depts = [
+    { id: 'steel',       label: 'Steel',       icon: 'hammer' },
+    { id: 'wood',        label: 'Wood',        icon: 'saw' },
+    { id: 'upholstery',  label: 'Upholstery',  icon: 'thread' },
+    { id: 'dispatching', label: 'Dispatching', icon: 'truck' },
+  ];
+
+  const content = (
+    <div className="phone" data-theme={dark ? 'dark' : 'light'}>
+      {/* status bar */}
+      <div className="statusbar">
+        <span>{time}</span>
+        <span className="right">
+          <svg width="18" height="11" viewBox="0 0 18 11"><g fill="currentColor">
+            <rect x="0" y="7" width="3" height="4" rx="0.6"/>
+            <rect x="5" y="5" width="3" height="6" rx="0.6"/>
+            <rect x="10" y="3" width="3" height="8" rx="0.6"/>
+            <rect x="15" y="0" width="3" height="11" rx="0.6"/>
+          </g></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+            <path d="M2 5.5C3.5 4 5.5 3 8 3s4.5 1 6 2.5"/>
+            <path d="M4 7.5C5 6.5 6.4 6 8 6s3 .5 4 1.5"/>
+            <circle cx="8" cy="9.5" r="0.8" fill="currentColor"/>
+          </svg>
+          <svg width="25" height="11" viewBox="0 0 25 11">
+            <rect x="0.5" y="0.5" width="21" height="10" rx="3" fill="none" stroke="currentColor" strokeOpacity="0.45"/>
+            <rect x="2" y="2" width="17" height="7" rx="1.6" fill="currentColor"/>
+            <path d="M22.5 4v3c0.7-.2 1.2-.8 1.2-1.5s-.5-1.3-1.2-1.5z" fill="currentColor" opacity="0.5"/>
+          </svg>
+        </span>
+      </div>
+
+      <div className="screen">
+        {/* Hero */}
+        <div className="hero">
+          <div className="logo-mark"><LogoMark size={56} /></div>
+          <div className="brand-name"><em>elmo's</em> Production</div>
+          <div className="greeting">
+            <div className="h">{greeting}</div>
+            <div className="sub">choose your bench to clock in.</div>
+          </div>
+        </div>
+
+        {/* Meta strip */}
+        <div className="meta-strip">
+          <span className="pill"><span className="dot"/> {shift}</span>
+          <span style={{display:'inline-flex', alignItems:'center', gap:6}}>
+            <Icon name="clock" size={13} /> {time}
+          </span>
+        </div>
+
+        {/* Sheet */}
+        <div className="sheet">
+          <div>
+            <div className="label" style={{marginBottom: 8}}>Department</div>
+            <div className="dept-grid">
+              {depts.map(d => (
+                <button key={d.id}
+                        className="chip"
+                        aria-pressed={dept === d.id}
+                        onClick={() => setDept(d.id)}>
+                  <span className="icon"><Icon name={d.icon} size={20} /></span>
+                  <span>{d.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="label" style={{marginBottom: 8}}>I am a…</div>
+            <div className="segment">
+              {['boss','manager','worker'].map(r => (
+                <button key={r} className="seg" aria-pressed={role === r}
+                        onClick={() => setRole(r)}>
+                  {r[0].toUpperCase() + r.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="label" style={{marginBottom: 8, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+              <span>Enter PIN</span>
+              <span style={{display:'inline-flex', gap:4, alignItems:'center', textTransform:'none', letterSpacing:0, fontWeight:500, color:'var(--ink-3)', fontSize: 11}}>
+                <Icon name="shield" size={11} /> 4-digit
+              </span>
+            </div>
+            <PinPad value={pin} onChange={setPin} onSubmit={submit} error={error} />
+          </div>
+
+          <button className="signin" disabled={pin.length !== PIN_LENGTH || loading} onClick={submit}>
+            {loading ? 'Signing in…' : <>Sign In <span className="arrow"><Icon name="arrow" size={18} /></span></>}
+          </button>
+        </div>
+
+        <div className="foot">
+          forgot your PIN? <a href="#">tap your foreman</a>
+        </div>
+      </div>
+
+      <div className="home-indicator" />
+    </div>
+  );
+
+  if (headless) return content;
+
+  return (
+    <div className="stage" data-bg={background} data-theme={dark ? 'dark' : 'light'}>
+      {content}
+    </div>
+  );
+}
+
+/* ──────────────── App: Tweaks + variants ──────────────── */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "view": "single",
+  "dark": false,
+  "background": "gradient"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // apply theme to body for global bg
+  useEffect(() => {
+    document.body.dataset.theme = t.dark ? 'dark' : 'light';
+  }, [t.dark]);
+
+  if (t.view === 'explore') {
+    const variants = [
+      { id: 'plain',    label: 'Plain very-light grey',     desc: 'most iOS Settings-like' },
+      { id: 'gradient', label: 'Warm gradient',             desc: 'cream → off-white' },
+      { id: 'noise',    label: 'Subtle noise texture',      desc: 'depth, almost imperceptible' },
+      { id: 'glow',     label: 'Soft amber glow',           desc: 'light behind the logo' },
+    ];
+    return (
+      <div data-theme={t.dark ? 'dark' : 'light'}>
+        <div className="explore-header" style={{padding: '50px 20px 0'}}>
+          <h1>Background — 4 directions</h1>
+          <p>same screen, four atmospheres. compare side-by-side.</p>
+        </div>
+        <div className="explore-grid">
+          {variants.map(v => (
+            <div className="variant-stage" key={v.id}>
+              <div className="variant-label"><span className="dot"/> {v.label} <span style={{color:'var(--ink-3)', fontWeight:400, marginLeft:6, textTransform:'none', letterSpacing:0}}>· {v.desc}</span></div>
+              <div className="variant-shell" data-bg={v.id} style={t.dark ? {background: v.id === 'glow'
+                ? 'radial-gradient(50% 40% at 50% 22%, rgba(240,174,92,0.18) 0%, transparent 60%), radial-gradient(120% 80% at 50% 100%, #131722 0%, #0e1118 60%)'
+                : v.id === 'gradient'
+                  ? 'radial-gradient(120% 80% at 50% 0%, #1a1f2c 0%, #0e1118 40%, #0a0c12 100%)'
+                  : '#0e1118'} : {}}>
+                <LoginScreen background={v.id} dark={t.dark} headless />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <TweaksPanel title="Tweaks">
+          <TweakSection title="View">
+            <TweakRadio label="Mode" value={t.view} onChange={v => setTweak('view', v)}
+                        options={[{value:'single', label:'Single'},{value:'explore', label:'Explore'}]} />
+            <TweakRadio label="Theme" value={t.dark ? 'dark' : 'light'} onChange={v => setTweak('dark', v === 'dark')}
+                        options={[{value:'light', label:'Light'},{value:'dark', label:'Dark'}]} />
+          </TweakSection>
+        </TweaksPanel>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <LoginScreen background={t.background} dark={t.dark} />
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="View">
+          <TweakRadio label="Mode" value={t.view} onChange={v => setTweak('view', v)}
+                      options={[{value:'single', label:'Single'},{value:'explore', label:'Explore'}]} />
+          <TweakRadio label="Theme" value={t.dark ? 'dark' : 'light'} onChange={v => setTweak('dark', v === 'dark')}
+                      options={[{value:'light', label:'Light'},{value:'dark', label:'Dark'}]} />
+        </TweakSection>
+        <TweakSection title="Background">
+          <TweakSelect label="Style" value={t.background} onChange={v => setTweak('background', v)}
+                       options={[
+                         {value:'plain', label:'Plain very-light grey'},
+                         {value:'gradient', label:'Warm gradient'},
+                         {value:'noise', label:'Noise texture'},
+                         {value:'glow', label:'Amber glow'},
+                       ]} />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+
+</body>
+</html>

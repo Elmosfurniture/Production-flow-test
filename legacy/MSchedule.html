@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>elmo's Production — Schedule (Rows)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f2ee; --bg-2: #ece8e0;
+    --surface: #ffffff; --surface-2: #fbf9f5; --surface-3: #f1eee7;
+    --ink: #1a1d24; --ink-2: #4a4e5a; --ink-3: #8a8e99;
+    --hairline: rgba(26,29,36,0.08); --hairline-2: rgba(26,29,36,0.12);
+    --navy: #1f2a44; --navy-soft: rgba(31,42,68,0.08);
+    --amber: #e89a3c; --amber-2: #f0ae5c; --amber-soft: rgba(232,154,60,0.14);
+    --red: #d2533a; --red-soft: rgba(210,83,58,0.10);
+    --green: #4caf6a; --green-soft: rgba(76,175,106,0.12);
+    --teal: #3a9aaf; --teal-soft: rgba(58,154,175,0.12);
+    --purple: #8b5fbf; --purple-soft: rgba(139,95,191,0.12);
+    --blue: #4677c8; --blue-soft: rgba(70,119,200,0.12);
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.04), 0 8px 20px rgba(26,29,36,0.04);
+    --shadow-pop: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.06), 0 12px 28px rgba(26,29,36,0.10);
+    --r-sm: 10px; --r-md: 14px; --r-lg: 20px;
+  }
+  [data-theme="dark"] {
+    --bg: #0e1118; --bg-2: #131722;
+    --surface: #1a1f2c; --surface-2: #20263488; --surface-3: #232938;
+    --ink: #f1f2f5; --ink-2: #b8bcc8; --ink-3: #7c8090;
+    --hairline: rgba(255,255,255,0.07); --hairline-2: rgba(255,255,255,0.12);
+    --navy: #2e3d63; --navy-soft: rgba(88,114,180,0.18);
+    --amber: #f0ae5c; --amber-2: #f5c178; --amber-soft: rgba(240,174,92,0.16);
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 20px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin:0; padding:0; min-height: 100vh;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    color: var(--ink); letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    background: radial-gradient(120% 80% at 50% 0%, var(--surface-2) 0%, var(--bg) 40%, var(--bg-2) 100%);
+  }
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* Sidebar (compact) */
+  .side {
+    background: var(--surface); border-right: 1px solid var(--hairline);
+    padding: 16px 12px; display: flex; flex-direction: column; gap: 12px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; padding: 2px 4px 8px; border-bottom: 1px solid var(--hairline); }
+  .brand .mark { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--hairline-2); display: flex; align-items: center; justify-content: center; background: var(--surface-2); flex-shrink: 0; }
+  .brand .name b { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; display: block; line-height: 1.15; }
+  .brand .name b em { font-style: normal; color: var(--amber); }
+  .brand .name span { font-size: 10px; color: var(--ink-3); font-weight: 500; }
+  .ctx-card { background: var(--surface-2); border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .ctx-card .row { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .ctx-card .row b { color: var(--ink); font-weight: 600; }
+  .role-pill { align-self: flex-start; background: var(--navy); color: white; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .nav-group { display: flex; flex-direction: column; gap: 2px; }
+  .nav-title { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: var(--ink-3); text-transform: uppercase; padding: 8px 10px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; font-size: 13px; font-weight: 500; color: var(--ink-2); cursor: pointer; }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item[aria-current="page"] { background: var(--navy-soft); color: var(--navy); font-weight: 600; }
+  [data-theme="dark"] .nav-item[aria-current="page"] { color: var(--amber-2); }
+  .nav-item .ic { width: 16px; height: 16px; flex-shrink: 0; color: var(--ink-3); }
+  .nav-item[aria-current="page"] .ic { color: var(--navy); }
+  [data-theme="dark"] .nav-item[aria-current="page"] .ic { color: var(--amber-2); }
+  .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 7px; padding-top: 10px; border-top: 1px solid var(--hairline); }
+  .util-row { display: flex; gap: 5px; }
+  .util-btn { flex: 1; appearance: none; border: 1px solid var(--hairline-2); background: var(--surface-2); color: var(--ink-2); border-radius: 9px; padding: 7px 8px; font: inherit; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
+  .signout { width: 100%; appearance: none; border: 1px solid rgba(210,83,58,0.25); background: var(--red-soft); color: var(--red); border-radius: 10px; padding: 9px; font: inherit; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; }
+  .meta-foot { font-size: 10px; color: var(--ink-3); display: flex; flex-direction: column; gap: 2px; padding: 4px 4px 0; }
+  .meta-foot .sync { display: flex; align-items: center; gap: 5px; }
+  .meta-foot .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+
+  /* Main */
+  .main { padding: 18px 22px 30px; min-width: 0; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+  .topbar h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin: 0; line-height: 1.1; }
+  .topbar .sub { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+  .topbar-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .ibtn { appearance: none; border: 1px solid var(--hairline-2); background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 500; padding: 7px 11px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(26,29,36,0.04); }
+  .ibtn:hover { background: var(--surface-2); }
+  .ibtn .ic { width: 13px; height: 13px; color: var(--ink-2); }
+  .ibtn.primary { background: var(--navy); color: white; border-color: var(--navy); box-shadow: 0 6px 14px rgba(31,42,68,0.22); }
+  .ibtn.primary .ic { color: white; }
+
+  /* Day strip */
+  .day-strip {
+    display: flex; gap: 4px; padding: 5px;
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 12px; box-shadow: var(--shadow-card);
+    margin-bottom: 12px;
+  }
+  .day-prev, .day-next { appearance: none; border: 0; background: transparent; color: var(--ink-2); width: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .day-prev:hover, .day-next:hover { background: var(--surface-2); color: var(--ink); }
+  .wk-label { display: flex; align-items: center; gap: 4px; padding: 0 12px; font-size: 12px; font-weight: 600; color: var(--ink-2); border-right: 1px solid var(--hairline); }
+  .day-tab {
+    flex: 1; appearance: none; border: 0; background: transparent;
+    padding: 6px 6px; border-radius: 9px; cursor: pointer; font: inherit;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    position: relative;
+  }
+  .day-tab .dn { font-size: 10px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; }
+  .day-tab .dd { font-size: 13px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .day-tab:hover { background: var(--surface-2); }
+  .day-tab[aria-pressed="true"] { background: var(--amber-soft); }
+  .day-tab[aria-pressed="true"] .dn, .day-tab[aria-pressed="true"] .dd { color: var(--amber); }
+  .day-tab.has-issue::after { content: ""; position: absolute; top: 4px; right: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--red); }
+
+  /* Filter bar */
+  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .dept-tabs { display: flex; gap: 4px; padding: 3px; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 10px; }
+  .dept-tab { appearance: none; border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 12px; font-weight: 500; padding: 6px 10px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  .dept-tab .ic { width: 13px; height: 13px; color: var(--ink-3); }
+  .dept-tab[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 4px rgba(26,29,36,0.05); font-weight: 600; }
+  .dept-tab[aria-pressed="true"] .ic { color: var(--navy); }
+
+  /* Day-progress bar (slim, in topbar area) */
+  .day-progress {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 14px;
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 10px; box-shadow: var(--shadow-card);
+    margin-bottom: 12px;
+    font-size: 11px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .day-progress .t-start, .day-progress .t-end { font-weight: 600; color: var(--ink-2); }
+  .day-progress .bar {
+    flex: 1; position: relative; height: 8px; border-radius: 999px;
+    background: var(--surface-3);
+    overflow: visible;
+  }
+  .day-progress .bar .elapsed {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: linear-gradient(90deg, var(--ink-2), var(--ink));
+    border-radius: 999px;
+  }
+  .day-progress .bar .now-marker {
+    position: absolute; top: -3px; bottom: -3px;
+    width: 2px; background: var(--amber);
+    box-shadow: 0 0 0 2px rgba(232,154,60,0.2);
+  }
+  .day-progress .bar .now-marker .label {
+    position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+    background: var(--amber); color: white;
+    font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px;
+    white-space: nowrap;
+  }
+  .day-progress .bar .brk-tick {
+    position: absolute; top: 0; bottom: 0;
+    background: repeating-linear-gradient(45deg, var(--ink-3), var(--ink-3) 2px, transparent 2px, transparent 4px);
+    opacity: 0.4;
+  }
+  .day-progress .info { display: flex; gap: 10px; align-items: center; font-weight: 500; }
+  .day-progress .info b { color: var(--ink); font-weight: 700; font-size: 12px; }
+  .day-progress .info .sep { color: var(--hairline-2); }
+
+  /* === Machine row block === */
+  .machine-block {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-card);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .machine-block.collapsed .mb-body { display: none; }
+
+  .mb-head {
+    display: grid;
+    grid-template-columns: 14px auto 1fr auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-left: 4px solid var(--accent, var(--ink));
+    background: var(--accent-soft, var(--surface-2));
+  }
+  .mb-head .chev { color: var(--ink-3); transition: transform 200ms ease; }
+  .machine-block.collapsed .mb-head .chev { transform: rotate(-90deg); }
+  .mb-head .ttl {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 700; color: var(--accent, var(--ink));
+    letter-spacing: -0.01em;
+  }
+  .mb-head .ttl .ic { color: var(--accent, var(--ink)); }
+  .mb-head .ttl .op {
+    color: var(--ink-2); font-weight: 500; font-size: 11px;
+    margin-left: 4px;
+  }
+  .mb-head .meta {
+    display: flex; gap: 10px; align-items: center;
+    font-size: 11px; color: var(--ink-3); font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .mb-head .meta b { color: var(--ink); font-weight: 700; }
+  /* Per-machine progress bar (shows day-fill of jobs vs now) */
+  .mb-progress {
+    width: 180px; height: 5px; border-radius: 999px;
+    background: var(--surface-3); position: relative; overflow: visible;
+  }
+  .mb-progress .planned { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); opacity: 0.3; border-radius: 999px; }
+  .mb-progress .done { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 999px; }
+  .mb-progress .now-tick { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--amber); border-radius: 1px; }
+  /* Status pill */
+  .mb-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 999px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .mb-status.ontrack { background: var(--green-soft); color: var(--green); }
+  .mb-status.behind  { background: var(--red-soft); color: var(--red); }
+  .mb-status.ahead   { background: var(--blue-soft); color: var(--blue); }
+  .mb-status.idle    { background: var(--surface-3); color: var(--ink-3); }
+  .mb-status.overflow{ background: var(--red); color: white; }
+
+  /* Body — the row list */
+  .mb-body {
+    display: flex; flex-direction: column;
+  }
+
+  .row-job, .row-brk {
+    display: grid;
+    grid-template-columns: 22px 28px 70px 76px 1fr 90px 132px;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-top: 1px solid var(--hairline);
+    font-size: 12px;
+    min-height: 44px;
+  }
+  .row-job:hover { background: var(--surface-2); }
+
+  .row-job.now {
+    background: linear-gradient(90deg, rgba(232,154,60,0.10), transparent 30%);
+    border-left: 3px solid var(--amber);
+    padding-left: 11px;
+  }
+  .row-job.now .seq { background: var(--amber); color: white; }
+
+  .row-job.next {
+    background: rgba(76,175,106,0.04);
+  }
+
+  .row-job.overflow .ord { color: var(--red); }
+
+  .seq {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--surface-3); color: var(--ink-2);
+    font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+
+  .time-cell {
+    display: flex; flex-direction: column; gap: 0;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+  }
+  .time-cell .from { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .time-cell .to { font-size: 11px; color: var(--ink-3); font-weight: 500; }
+  .time-cell .dur {
+    display: inline-block;
+    background: var(--surface-3); color: var(--ink-2);
+    font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 4px;
+    margin-top: 2px; width: fit-content;
+  }
+
+  .ord-cell { display: flex; flex-direction: column; gap: 1px; }
+  .ord-cell .ord { font-size: 13px; font-weight: 700; color: var(--accent, var(--amber)); font-variant-numeric: tabular-nums; }
+  .ord-cell .pri-tag {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+    color: var(--ink-3);
+  }
+  .ord-cell .pri-tag b { color: var(--ink); }
+
+  .prod-cell { min-width: 0; }
+  .prod-cell .name {
+    font-size: 13px; font-weight: 600; color: var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    line-height: 1.25;
+  }
+  .prod-cell .sub {
+    font-size: 11px; color: var(--ink-3); font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    margin-top: 2px;
+  }
+  .prod-cell .sub b { color: var(--ink-2); font-weight: 600; }
+
+  .pts-cell { text-align: right; font-variant-numeric: tabular-nums; }
+  .pts-cell .pts { font-size: 16px; font-weight: 700; color: var(--accent, var(--ink)); line-height: 1; letter-spacing: -0.02em; }
+  .pts-cell .lbl { font-size: 9px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+  .pts-cell .rate { font-size: 11px; color: var(--ink-3); margin-top: 1px; }
+
+  /* Drag handle */
+  .drag-handle {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-3); cursor: grab; opacity: 0.55;
+    font-size: 14px; line-height: 1; user-select: none;
+    transition: opacity 140ms ease, color 140ms ease;
+  }
+  .drag-handle:hover { opacity: 1; color: var(--ink); }
+  .drag-handle:active { cursor: grabbing; }
+
+  .actions-cell { display: flex; align-items: center; gap: 5px; justify-content: flex-end; }
+  .act-btn {
+    appearance: none; border: 0;
+    font: inherit; font-size: 11px; font-weight: 700;
+    padding: 6px 10px; border-radius: 7px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+    color: white; white-space: nowrap;
+    transition: transform 100ms ease, box-shadow 140ms ease;
+  }
+  .act-btn:hover { transform: translateY(-1px); }
+  .act-btn.start { background: var(--green); box-shadow: 0 3px 8px rgba(76,175,106,0.28); }
+  .act-btn.pause { background: var(--amber); box-shadow: 0 3px 8px rgba(232,154,60,0.28); }
+  .act-btn.stop  { background: var(--red);   box-shadow: 0 3px 8px rgba(210,83,58,0.28); }
+  .act-btn.ghost {
+    background: var(--surface); color: var(--ink-3); border: 1px solid var(--hairline-2);
+    font-weight: 600; box-shadow: none;
+  }
+  .act-btn.ghost:hover { color: var(--ink); border-color: var(--ink-3); }
+
+  /* Legacy classes kept harmless */
+  .actions-cell .arr-btn {
+    appearance: none; border: 1px solid var(--hairline-2);
+    background: var(--surface); color: var(--ink-2);
+    width: 26px; height: 26px; border-radius: 6px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 140ms ease;
+  }
+  .actions-cell .arr-btn:hover:not(:disabled) {
+    background: var(--accent, var(--navy)); color: white; border-color: var(--accent, var(--navy));
+  }
+  .actions-cell .arr-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .actions-cell .start-btn {
+    appearance: none; border: 0;
+    background: var(--green); color: white;
+    font: inherit; font-size: 11px; font-weight: 700;
+    padding: 6px 11px; border-radius: 7px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+    box-shadow: 0 4px 10px rgba(76,175,106,0.3);
+  }
+  .actions-cell .start-btn.now-btn {
+    background: var(--amber);
+    box-shadow: 0 4px 10px rgba(232,154,60,0.3);
+  }
+
+  /* Break row — slimmer, neutral */
+  .row-brk {
+    grid-template-columns: 28px 70px 1fr auto;
+    background: var(--surface-2);
+    color: var(--ink-3);
+    font-size: 11px;
+    padding: 6px 14px;
+    min-height: 30px;
+  }
+  .row-brk .b-icon {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-3);
+  }
+  .row-brk .b-time { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink-2); font-size: 11px; }
+  .row-brk .b-label { font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; font-size: 10px; }
+  .row-brk .b-dur {
+    background: var(--surface); border: 1px solid var(--hairline);
+    color: var(--ink-3); font-size: 10px; font-weight: 600;
+    padding: 1px 6px; border-radius: 4px;
+  }
+
+  /* Empty state */
+  .empty-row {
+    padding: 18px 14px;
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 12px; font-weight: 500;
+    border-top: 1px solid var(--hairline);
+    background: repeating-linear-gradient(
+      45deg, transparent, transparent 8px,
+      rgba(0,0,0,0.015) 8px, rgba(0,0,0,0.015) 16px
+    );
+  }
+
+  /* Color accents per machine */
+  .machine-block.cutoff { --accent: var(--red);    --accent-soft: rgba(210,83,58,0.05); }
+  .machine-block.tube   { --accent: var(--blue);   --accent-soft: rgba(70,119,200,0.05); }
+  .machine-block.grind  { --accent: var(--teal);   --accent-soft: rgba(58,154,175,0.05); }
+  .machine-block.weld-f { --accent: var(--purple); --accent-soft: rgba(139,95,191,0.05); }
+  .machine-block.weld-j { --accent: var(--purple); --accent-soft: rgba(139,95,191,0.05); }
+  .machine-block.weld-k { --accent: var(--purple); --accent-soft: rgba(139,95,191,0.05); }
+  .machine-block.paint  { --accent: var(--green);  --accent-soft: rgba(76,175,106,0.05); }
+  .machine-block.boor   { --accent: var(--amber);  --accent-soft: rgba(232,154,60,0.05); }
+  .machine-block.idle   { opacity: 0.85; }
+
+  .ic { display: inline-block; vertical-align: middle; }
+
+  /* Tablet adjustments */
+  @media (max-width: 1100px) {
+    .app { grid-template-columns: 200px 1fr; }
+    .row-job { grid-template-columns: 20px 24px 64px 70px 1fr 70px 120px; gap: 8px; padding: 8px 12px; }
+    .row-job .pts-cell .lbl { display: none; }
+    .actions-cell { gap: 3px; }
+    .act-btn { padding: 5px 8px; font-size: 10px; }
+  }
+  @media (max-width: 900px) {
+    .row-job { grid-template-columns: 20px 24px 60px 1fr 60px 110px; }
+    .row-job .ord-cell { display: none; }
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useMemo, useEffect } = React;
+
+const I = ({ n, s = 16, w = 1.8 }) => {
+  const p = { width: s, height: s, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: w, strokeLinecap: "round", strokeLinejoin: "round", className: "ic" };
+  switch (n) {
+    case 'hammer': return <svg {...p}><path d="M15 12 9.5 17.5a2.121 2.121 0 0 1-3-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/></svg>;
+    case 'saw': return <svg {...p}><path d="M3 6 L7 10 L4 13 L8 17 L5 20"/><path d="M10 4 14 8 11 11 15 15 12 18 16 22"/></svg>;
+    case 'thread': return <svg {...p}><path d="M5.5 4.5 L5.5 14 a3 3 0 0 0 6 0 L11.5 7 a2 2 0 0 1 4 0 L15.5 16 a4 4 0 0 1-8 0"/></svg>;
+    case 'truck': return <svg {...p}><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>;
+    case 'grid': return <svg {...p}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
+    case 'list': return <svg {...p}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>;
+    case 'cal': return <svg {...p}><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>;
+    case 'wave': return <svg {...p}><path d="M2 12h2a2 2 0 0 1 2 2v2"/><path d="M22 12h-2a2 2 0 0 0-2-2v-2"/><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 7.76a6 6 0 0 0 0 8.49"/></svg>;
+    case 'check-sq': return <svg {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>;
+    case 'pkg': return <svg {...p}><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>;
+    case 'machine': return <svg {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+    case 'users': return <svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>;
+    case 'factory': return <svg {...p}><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>;
+    case 'search': return <svg {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>;
+    case 'clock': return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>;
+    case 'print': return <svg {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>;
+    case 'shield': return <svg {...p}><path d="M12 3 4 6v6c0 4.5 3.2 8.4 8 9 4.8-.6 8-4.5 8-9V6l-8-3Z"/></svg>;
+    case 'logout': return <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+    case 'down': return <svg {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+    case 'up': return <svg {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+    case 'arr-l': return <svg {...p}><path d="M19 12H5M12 19l-7-7 7-7"/></svg>;
+    case 'arr-r': return <svg {...p}><path d="M5 12h14M12 5l7 7-7 7"/></svg>;
+    case 'arr-up': return <svg {...p} strokeWidth={2.4}><path d="m18 15-6-6-6 6"/></svg>;
+    case 'arr-dn': return <svg {...p} strokeWidth={2.4}><path d="m6 9 6 6 6-6"/></svg>;
+    case 'chev': return <svg {...p}><path d="m6 9 6 6 6-6"/></svg>;
+    case 'refresh': return <svg {...p}><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/></svg>;
+    case 'coffee': return <svg {...p}><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>;
+    case 'broom': return <svg {...p}><path d="M19 14 5 22 1 18l8-14 4 4-3 5"/><path d="m13 14 6-6 4 4-6 6"/></svg>;
+    case 'warn': return <svg {...p}><path d="m21.7 18.3-9-15.7a2 2 0 0 0-3.4 0l-9 15.7a2 2 0 0 0 1.7 3h18a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/></svg>;
+    case 'play': return <svg {...p}><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>;
+    case 'pause': return <svg {...p}><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg>;
+    case 'stop': return <svg {...p}><rect x="5" y="5" width="14" height="14" fill="currentColor"/></svg>;
+    case 'utensils': return <svg {...p}><path d="M3 2v7c0 1.1.9 2 2 2h2v11"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Z"/></svg>;
+    default: return null;
+  }
+};
+
+const Logo = ({ size = 30 }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64">
+    <defs><linearGradient id="lgs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ffffff"/><stop offset="100%" stopColor="#f6f3ec"/></linearGradient></defs>
+    <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#lgs2)" stroke="rgba(26,29,36,0.10)"/>
+    <circle cx="44" cy="22" r="5" fill="var(--amber)"/>
+    <path d="M6 46 L20 28 L28 38 L40 22 L52 46 Z" fill="var(--navy)"/>
+  </svg>
+);
+
+function Sidebar({ active }) {
+  const items = [
+    { group: 'Production', items: [
+      { id:'dash', label:'Dashboard', icon:'grid' },
+      { id:'pri', label:'Priority', icon:'list' },
+      { id:'week', label:'Week Plan', icon:'cal' },
+      { id:'sched', label:'Schedule', icon:'wave' },
+    ]},
+    { group: 'Tracking', items: [
+      { id:'track', label:'Tracking', icon:'check-sq' },
+      { id:'disp', label:'Dispatch', icon:'truck' },
+    ]},
+    { group: 'Config', items: [
+      { id:'prod', label:'Products', icon:'pkg' },
+      { id:'mach', label:'Machines', icon:'machine' },
+      { id:'cust', label:'Customers', icon:'users' },
+    ]},
+  ];
+  return (
+    <aside className="side">
+      <div className="brand">
+        <div className="mark"><Logo size={28}/></div>
+        <div className="name">
+          <b><em>elmo's</em> Production</b>
+          <span>Steelworks · Plant 2</span>
+        </div>
+      </div>
+      <div className="ctx-card">
+        <div className="role-pill">Boss</div>
+        <div className="row"><I n="factory" s={13}/><span>Steel Dept</span></div>
+        <div className="row"><I n="users" s={13}/><span>signed in as <b>S. Eyck</b></span></div>
+      </div>
+      {items.map(g => (
+        <div key={g.group} className="nav-group">
+          <div className="nav-title">{g.group}</div>
+          {g.items.map(it => (
+            <div key={it.id} className="nav-item" aria-current={active===it.id ? 'page' : undefined}>
+              <I n={it.icon} s={15}/><span>{it.label}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+      <div className="side-foot">
+        <div className="util-row">
+          <button className="util-btn"><I n="down" s={12}/> Export</button>
+          <button className="util-btn"><I n="shield" s={12}/> Backups</button>
+          <button className="util-btn"><I n="up" s={12}/> Import</button>
+        </div>
+        <button className="signout"><I n="logout" s={13}/> Logout</button>
+        <div className="meta-foot">
+          <div className="sync"><span className="dot"/> Synced 14:53</div>
+          <div>06 May 2026 · Wednesday</div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+const fmt = (m) => {
+  const h = Math.floor(m / 60), mm = m % 60;
+  return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+};
+const durFmt = (mins) => mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60 ? (mins%60)+'m' : ''}`.trim() : `${mins}m`;
+
+const NOW_MIN = 11 * 60 + 42; // 11:42
+
+// Build a mixed timeline: jobs + breaks in chronological order
+function buildTimeline(jobs, breaks) {
+  const items = [];
+  jobs.forEach((j, i) => items.push({ kind: 'job', ...j, _idx: i }));
+  breaks.forEach(b => items.push({ ...b, breakKind: b.kind, kind: 'brk' }));
+  items.sort((a, b) => a.start - b.start);
+  // assign sequence numbers only to jobs
+  let seq = 0;
+  return items.map(it => it.kind === 'job' ? { ...it, seq: ++seq } : it);
+}
+
+const breaks = [
+  { kind: 'cleaning', label: 'Start cleaning', start: 7*60,    end: 7*60+15 },
+  { kind: 'break',    label: 'Morning break',  start: 9*60,    end: 9*60+30 },
+  { kind: 'lunch',    label: 'Lunch',          start: 13*60,   end: 13*60+30 },
+  { kind: 'break',    label: 'Short break',    start: 15*60+30,end: 15*60+45 },
+  { kind: 'cleaning', label: 'End cleaning',   start: 17*60+5, end: 17*60+15 },
+];
+
+const machines = [
+  { id:'cutoff', name:'Cutt off', cls:'cutoff', op:'Auto', util:41, jobs:[
+      { ord:'222', name:'Bowtie Pote', qty:250, pri:3, cust:'KFC', start: 7*60+15, dur: 105, pts:40, rate:'15s/pt' },
+      { ord:'222', name:'Bowtie Pote', qty:250, pri:3, cust:'KFC', start: 9*60+30, dur: 210, pts:480, rate:'15s/pt' },
+      { ord:'222', name:'Bowtie Pote', qty:250, pri:3, cust:'KFC', start: 13*60+30, dur: 135, pts:320, rate:'15s/pt', overflow:true },
+  ]},
+  { id:'tube', name:'Tube Laser', cls:'tube', op:'Auto', util:41, jobs:[
+      { ord:'222', name:'Bowtie D Ruggie', qty:250, pri:1, cust:'KFC', start: 7*60+15, dur: 105, pts:20, rate:'30s/pt' },
+      { ord:'222', name:'Bowtie D Ruggie', qty:250, pri:1, cust:'KFC', start: 9*60+30, dur: 210, pts:240, rate:'30s/pt' },
+      { ord:'222', name:'Bowtie D Ruggie', qty:250, pri:1, cust:'KFC', start: 13*60+30, dur: 135, pts:160, rate:'30s/pt', overflow:true },
+  ]},
+  { id:'grind', name:'Grind', cls:'grind', op:'Francis', util:7, jobs:[
+      { ord:'036', name:'Booth bench single sides', qty:9, pri:1, cust:'KFC Ceres', start: 7*60+15, dur: 105, pts:5, rate:'120s/pt' },
+      { ord:'036', name:'Booth bench single sides', qty:9, pri:1, cust:'KFC Ceres', start: 9*60+30, dur: 26, pts:13, rate:'120s/pt' },
+  ]},
+  { id:'paint', name:'Paint', cls:'paint', op:'Mike', util:75, jobs:[
+      { ord:'045', name:'Coffee Table Pote', qty:20, pri:3, cust:'RG', start: 7*60+15, dur: 105, pts:20, rate:'10min/pt' },
+      { ord:'053', name:'320 Table base', qty:6, pri:3, cust:'KFC SA', start: 9*60+30, dur: 210, pts:6, rate:'30min/pt' },
+  ]},
+  { id:'weld-f', name:'Weld · Francis', cls:'weld-f', op:'Francis', util:0, jobs:[] },
+  { id:'weld-j', name:'Weld · Jeff', cls:'weld-j', op:'Jeff', util:0, jobs:[] },
+  { id:'weld-k', name:'Weld · Kelvin', cls:'weld-k', op:'Kelvin', util:0, jobs:[] },
+  { id:'boor', name:'Boor', cls:'boor', op:'Auto', util:0, jobs:[] },
+];
+
+function BreakRow({ b }) {
+  const ic = b.breakKind === 'lunch' ? 'utensils' : b.breakKind === 'break' ? 'coffee' : 'broom';
+  return (
+    <div className="row-brk">
+      <div className="b-icon"><I n={ic} s={13}/></div>
+      <div className="b-time">{fmt(b.start)}–{fmt(b.end)}</div>
+      <div className="b-label">{b.label}</div>
+      <div className="b-dur">{durFmt(b.end - b.start)}</div>
+    </div>
+  );
+}
+
+function JobRow({ j, isFirst, isLast, onUp, onDown }) {
+  const isNow = NOW_MIN >= j.start && NOW_MIN < (j.start + j.dur);
+  const isNext = !isNow && j.start > NOW_MIN && j.seq <= 99; // next visible row
+  const cls = ['row-job'];
+  if (isNow) cls.push('now');
+  if (j.overflow) cls.push('overflow');
+  return (
+    <div className={cls.join(' ')}>
+      <div className="drag-handle" title="Drag to reorder">⠿</div>
+      <div className="seq">{j.seq}</div>
+      <div className="time-cell">
+        <span className="from">{fmt(j.start)}</span>
+        <span className="to" style={j.overflow ? {color:'var(--amber)', fontWeight:700} : undefined}>
+          → {fmt(j.start + j.dur)}{j.overflow && <span style={{marginLeft:4, fontSize:9, fontWeight:700, color:'var(--amber)', background:'var(--amber-soft, rgba(232,154,60,0.14))', padding:'1px 4px', borderRadius:3}}>→ THU</span>}
+        </span>
+      </div>
+      <div className="ord-cell">
+        <span className="ord">#{j.ord}</span>
+        <span className="pri-tag">PRI <b>{j.pri}</b></span>
+      </div>
+      <div className="prod-cell">
+        <div className="name">{j.name}</div>
+        <div className="sub">×{j.qty} · <b>{j.cust}</b> · {durFmt(j.dur)}</div>
+      </div>
+      <div className="pts-cell">
+        <div className="pts">{j.pts}</div>
+        <div className="lbl">parts · {j.rate}</div>
+      </div>
+      <div className="actions-cell">
+        {isNow ? (
+          <>
+            <button className="act-btn pause" title="Pause"><I n="pause" s={10}/> Pause</button>
+            <button className="act-btn stop" title="Stop"><I n="stop" s={10}/> Stop</button>
+          </>
+        ) : isNext ? (
+          <button className="act-btn start" title="Start"><I n="play" s={10}/> Start</button>
+        ) : (
+          <button className="act-btn ghost" title="Queued">Queued</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MachineBlock({ m, collapsed, onToggle }) {
+  const timeline = buildTimeline(m.jobs, breaks);
+  const overflow = m.jobs.some(j => j.overflow);
+  const idle = m.jobs.length === 0;
+  const used = m.jobs.reduce((s, j) => s + j.dur, 0);
+  const effective = 515;
+  const totalParts = m.jobs.reduce((s, j) => s + j.pts, 0);
+  const jobIndices = timeline.filter(it => it.kind === 'job');
+  const lastJobSeq = jobIndices.length;
+
+  // Progress: planned = total job mins, done = mins of jobs that should be done by NOW
+  // Behind = how many minutes of work scheduled to be done by now hasn't started yet
+  const SHIFT = 615;
+  const plannedPct = (used / SHIFT) * 100;
+  const shouldBeDone = m.jobs.reduce((s, j) => {
+    if (j.start + j.dur <= NOW_MIN) return s + j.dur;
+    if (j.start < NOW_MIN) return s + (NOW_MIN - j.start);
+    return s;
+  }, 0);
+  const donePct = (shouldBeDone / SHIFT) * 100;
+  const nowPct = ((NOW_MIN - 7*60) / SHIFT) * 100;
+  // Simulate "actual progress" — say grind is 12m behind, paint on track, cutoff/tube ahead by 5
+  const fakeBehind = { cutoff: -5, tube: 0, grind: 12, paint: 0 };
+  const behindMin = fakeBehind[m.id] ?? 0;
+  const status = behindMin > 5 ? 'behind' : behindMin < -3 ? 'ahead' : 'ontrack';
+
+  return (
+    <div className={`machine-block ${m.cls} ${collapsed ? 'collapsed' : ''} ${idle ? 'idle' : ''}`}>
+      <div className="mb-head" onClick={onToggle}>
+        <I n="chev" s={14} className="chev"/>
+        <div className="ttl">
+          <I n="machine" s={14}/> {m.name}
+          <span className="op">· {m.op}</span>
+        </div>
+        <div className="meta">
+          <span><b>{m.jobs.length}</b> jobs</span>
+          <span>·</span>
+          <span><b>{totalParts}</b> parts</span>
+          <span>·</span>
+          <span><b>{used}</b>/{effective}m</span>
+        </div>
+        {!idle && (
+          <div className="mb-progress">
+            <div className="planned" style={{ width: `${plannedPct}%` }}/>
+            <div className="done" style={{ width: `${donePct}%` }}/>
+            <div className="now-tick" style={{ left: `${nowPct}%` }}/>
+          </div>
+        )}
+        {idle && <span className="mb-status idle">Idle</span>}
+        {!idle && overflow && <span className="mb-status overflow"><I n="warn" s={9} w={2.4}/> Overflow</span>}
+        {!idle && !overflow && status === 'behind' && <span className="mb-status behind">▼ {behindMin}m behind</span>}
+        {!idle && !overflow && status === 'ahead' && <span className="mb-status ahead">▲ {-behindMin}m ahead</span>}
+        {!idle && !overflow && status === 'ontrack' && <span className="mb-status ontrack">On track</span>}
+      </div>
+      {!collapsed && (
+        <div className="mb-body">
+          {idle && <div className="empty-row">No work scheduled — drag an order here or use auto-schedule.</div>}
+          {!idle && timeline.map((it, i) => {
+            if (it.kind === 'brk') return <BreakRow key={`b-${i}`} b={it}/>;
+            return (
+              <JobRow key={`j-${i}`} j={it}
+                isFirst={it.seq === 1}
+                isLast={it.seq === lastJobSeq}
+                onUp={() => {}}
+                onDown={() => {}}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [day, setDay] = useState(2);
+  const [dept, setDept] = useState('steel');
+  const [collapsed, setCollapsed] = useState(() => {
+    const init = {};
+    machines.forEach(m => { if (m.jobs.length === 0) init[m.id] = true; });
+    return init;
+  });
+
+  const days = [
+    { dn:'Mon', dd:'04', issue:false },
+    { dn:'Tue', dd:'05', issue:false },
+    { dn:'Wed', dd:'06', issue:true },
+    { dn:'Thu', dd:'07', issue:true },
+    { dn:'Fri', dd:'08', issue:false },
+  ];
+
+  const totalJobs = machines.reduce((s, m) => s + m.jobs.length, 0);
+  const totalParts = machines.reduce((s, m) => s + m.jobs.reduce((a, j) => a + j.pts, 0), 0);
+  const overflows = machines.reduce((s, m) => s + m.jobs.filter(j => j.overflow).length, 0);
+  const idleMachines = machines.filter(m => m.jobs.length === 0).length;
+
+  return (
+    <div className="app">
+      <Sidebar active="sched"/>
+      <main className="main">
+        <div className="topbar">
+          <div>
+            <h1>Machine Schedules</h1>
+            <div className="sub">Daily worklist per station · use ↑/↓ to reorder · jobs run top → bottom</div>
+          </div>
+          <div className="topbar-actions">
+            <button className="ibtn"><I n="search" s={13}/> Find Order</button>
+            <button className="ibtn"><I n="clock" s={13}/> End of Day</button>
+            <button className="ibtn"><I n="print" s={13}/> Print Day</button>
+            <button className="ibtn primary"><I n="refresh" s={13}/> Regenerate</button>
+          </div>
+        </div>
+
+        <div className="day-strip">
+          <button className="day-prev"><I n="arr-l" s={14}/></button>
+          <div className="wk-label">Wk 19</div>
+          {days.map((d, i) => (
+            <button key={i}
+              className={`day-tab ${d.issue ? 'has-issue' : ''}`}
+              aria-pressed={day === i}
+              onClick={() => setDay(i)}>
+              <span className="dn">{d.dn}</span>
+              <span className="dd">{d.dd}</span>
+            </button>
+          ))}
+          <button className="day-next"><I n="arr-r" s={14}/></button>
+        </div>
+
+        <div className="filter-bar">
+          <div className="dept-tabs">
+            <button className="dept-tab" aria-pressed={dept==='all'} onClick={()=>setDept('all')}><I n="grid" s={12}/> All</button>
+            <button className="dept-tab" aria-pressed={dept==='steel'} onClick={()=>setDept('steel')}><I n="hammer" s={12}/> Steel</button>
+            <button className="dept-tab" aria-pressed={dept==='wood'} onClick={()=>setDept('wood')}><I n="saw" s={12}/> Wood</button>
+            <button className="dept-tab" aria-pressed={dept==='uphol'} onClick={()=>setDept('uphol')}><I n="thread" s={12}/> Upholstery</button>
+            <button className="dept-tab" aria-pressed={dept==='disp'} onClick={()=>setDept('disp')}><I n="truck" s={12}/> Dispatch</button>
+          </div>
+          <button className="ibtn" style={{marginLeft:'auto'}} onClick={() => {
+            const allOpen = Object.values(collapsed).every(v => !v);
+            const next = {};
+            machines.forEach(m => { next[m.id] = allOpen; });
+            setCollapsed(next);
+          }}>
+            <I n="list" s={13}/> Collapse all
+          </button>
+          <button className="ibtn" onClick={() => setCollapsed({})}>
+            <I n="grid" s={13}/> Expand all
+          </button>
+        </div>
+
+        {/* Slim day-progress bar */}
+        <div className="day-progress">
+          <span className="t-start">07:00</span>
+          <div className="bar">
+            {breaks.map((b, i) => {
+              const left = ((b.start - 7*60) / 615) * 100;
+              const w = ((b.end - b.start) / 615) * 100;
+              return <div key={i} className="brk-tick" style={{ left: `${left}%`, width: `${w}%` }}/>;
+            })}
+            <div className="elapsed" style={{ width: `${((NOW_MIN - 7*60) / 615) * 100}%` }}/>
+            <div className="now-marker" style={{ left: `${((NOW_MIN - 7*60) / 615) * 100}%` }}>
+              <span className="label">{fmt(NOW_MIN)}</span>
+            </div>
+          </div>
+          <span className="t-end">17:15</span>
+          <span className="sep">•</span>
+          <span className="info"><b>{totalJobs}</b> jobs <span className="sep">·</span> <b>{totalParts}</b> parts {overflows > 0 && <><span className="sep">·</span> <b style={{color:'var(--red)'}}>{overflows} overflow</b></>}</span>
+        </div>
+
+        {machines.map(m => (
+          <MachineBlock key={m.id} m={m}
+            collapsed={!!collapsed[m.id]}
+            onToggle={() => setCollapsed(c => ({ ...c, [m.id]: !c[m.id] }))} />
+        ))}
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

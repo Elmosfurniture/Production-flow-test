@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>elmo's Production — MES Station</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f2ee; --bg-2: #ece8e0;
+    --surface: #ffffff; --surface-2: #fbf9f5; --surface-3: #f1eee7;
+    --ink: #1a1d24; --ink-2: #4a4e5a; --ink-3: #8a8e99;
+    --hairline: rgba(26,29,36,0.08); --hairline-2: rgba(26,29,36,0.12);
+    --navy: #1f2a44; --navy-2: #2a3656; --navy-soft: rgba(31,42,68,0.08);
+    --amber: #e89a3c; --amber-2: #f0ae5c; --amber-soft: rgba(232,154,60,0.14);
+    --red: #d2533a; --red-soft: rgba(210,83,58,0.10);
+    --green: #4caf6a; --green-soft: rgba(76,175,106,0.12);
+    --teal: #3a9aaf; --teal-soft: rgba(58,154,175,0.12);
+    --blue: #4677c8; --blue-soft: rgba(70,119,200,0.12);
+    --purple: #8b5fbf; --purple-soft: rgba(139,95,191,0.12);
+    --yellow: #d4a531; --yellow-soft: rgba(212,165,49,0.14);
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.04), 0 8px 20px rgba(26,29,36,0.04);
+    --r-sm: 10px; --r-md: 14px; --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin:0; padding:0; min-height: 100vh;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    color: var(--ink); letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    background: radial-gradient(120% 80% at 50% 0%, var(--surface-2) 0%, var(--bg) 40%, var(--bg-2) 100%);
+  }
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* Sidebar — same as other pages */
+  .side { background: var(--surface); border-right: 1px solid var(--hairline); padding: 16px 12px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .brand { display: flex; align-items: center; gap: 9px; padding: 2px 4px 8px; border-bottom: 1px solid var(--hairline); }
+  .brand .mark { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--hairline-2); display: flex; align-items: center; justify-content: center; background: var(--surface-2); flex-shrink: 0; }
+  .brand .name b { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; display: block; line-height: 1.15; }
+  .brand .name b em { font-style: normal; color: var(--amber); }
+  .brand .name span { font-size: 10px; color: var(--ink-3); font-weight: 500; }
+  .ctx-card { background: var(--surface-2); border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .ctx-card .row { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .ctx-card .row .ic { color: var(--ink-3); flex-shrink: 0; }
+  .ctx-card .row b { color: var(--ink); font-weight: 600; }
+  .role-pill { align-self: flex-start; background: var(--navy); color: white; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .nav-group { display: flex; flex-direction: column; gap: 2px; }
+  .nav-title { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: var(--ink-3); text-transform: uppercase; padding: 8px 10px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; font-size: 13px; font-weight: 500; color: var(--ink-2); cursor: pointer; text-decoration: none; }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item[aria-current="page"] { background: var(--navy-soft); color: var(--navy); font-weight: 600; }
+  .nav-item .ic { width: 16px; height: 16px; flex-shrink: 0; color: var(--ink-3); }
+  .nav-item[aria-current="page"] .ic { color: var(--navy); }
+  .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 7px; padding-top: 10px; border-top: 1px solid var(--hairline); }
+  .util-row { display: flex; gap: 5px; }
+  .util-btn { flex: 1; appearance: none; border: 1px solid var(--hairline-2); background: var(--surface-2); color: var(--ink-2); border-radius: 9px; padding: 7px 8px; font: inherit; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
+  .signout { width: 100%; appearance: none; border: 1px solid rgba(210,83,58,0.25); background: var(--red-soft); color: var(--red); border-radius: 10px; padding: 9px; font: inherit; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; }
+  .meta-foot { font-size: 10px; color: var(--ink-3); display: flex; flex-direction: column; gap: 2px; padding: 4px 4px 0; }
+  .meta-foot .sync { display: flex; align-items: center; gap: 5px; }
+  .meta-foot .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+
+  /* ───── Main ───── */
+  .main { padding: 18px 22px 30px; min-width: 0; }
+
+  /* Breadcrumb / job header */
+  .crumb {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; color: var(--ink-3); font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .crumb a { color: var(--ink-3); text-decoration: none; }
+  .crumb a:hover { color: var(--ink); }
+  .crumb .sep { color: var(--hairline-2); }
+  .crumb .here { color: var(--ink); font-weight: 600; }
+  .crumb .close {
+    margin-left: auto;
+    appearance: none; border: 1px solid var(--hairline-2);
+    background: var(--surface); color: var(--ink-2);
+    border-radius: 9px; padding: 6px 11px;
+    font: inherit; font-size: 12px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  }
+  .crumb .close:hover { background: var(--surface-2); color: var(--ink); }
+
+  /* Job banner */
+  .job {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 18px; align-items: center;
+    margin-bottom: 14px;
+  }
+  .job .swatch {
+    width: 64px; height: 64px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--amber-soft), var(--amber-soft)),
+                repeating-linear-gradient(45deg, rgba(232,154,60,0.18) 0 6px, transparent 6px 12px);
+    background-blend-mode: normal;
+    border: 1px solid rgba(232,154,60,0.32);
+    color: var(--amber); display: flex; align-items: center; justify-content: center;
+  }
+  .job .info { min-width: 0; }
+  .job .info .l1 {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-size: 12px; color: var(--ink-3); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .job .info .ord {
+    color: var(--amber); font-variant-numeric: tabular-nums;
+  }
+  .job .info .pri {
+    background: var(--navy); color: white;
+    font-size: 10px; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.06em;
+  }
+  .job .info .pri.p9 { background: var(--ink); }
+  .job .info .pri.p1 { background: var(--red); }
+  .job .info h1 {
+    margin: 4px 0 6px;
+    font-size: 26px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.1;
+  }
+  .job .info .meta {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    font-size: 12px; color: var(--ink-2); font-weight: 500;
+  }
+  .job .info .meta b { color: var(--ink); font-weight: 600; }
+  .job .info .meta .sep { color: var(--hairline-2); }
+  .job .info .meta .dot { width: 5px; height: 5px; border-radius:50%; background: var(--ink-3); display:inline-block; vertical-align: middle; margin: 0 4px; }
+  .job .step-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 9px; border-radius: 7px;
+    background: var(--navy-soft); color: var(--navy);
+    font-size: 11px; font-weight: 600;
+  }
+
+  .job .quick {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+    border-left: 1px solid var(--hairline); padding-left: 18px;
+  }
+  .job .quick .qty {
+    font-size: 36px; font-weight: 600; letter-spacing: -0.03em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .job .quick .qty small { font-size: 14px; font-weight: 500; color: var(--ink-3); }
+  .job .quick .lbl { font-size: 10px; color: var(--ink-3); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+  .job .quick .due {
+    margin-top: 4px;
+    background: var(--yellow-soft); color: var(--yellow);
+    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Layout: left (timer + stats) + right (lap log) */
+  .grid2 {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  /* ─── Timer hero ─── */
+  .hero {
+    position: relative;
+    background:
+      radial-gradient(80% 90% at 30% 0%, rgba(255,255,255,0.06) 0%, transparent 60%),
+      linear-gradient(180deg, #1f2a44 0%, #1a2238 100%);
+    color: white;
+    border-radius: var(--r-lg);
+    padding: 24px 28px 22px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 12px 36px rgba(26,29,36,0.16),
+      0 2px 6px rgba(26,29,36,0.08);
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 24px 24px;
+    mask-image: radial-gradient(80% 70% at 50% 35%, black 0%, transparent 75%);
+    pointer-events: none;
+  }
+  .hero-top {
+    position: relative;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .run-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(76,175,106,0.18);
+    color: #6ed98a;
+    border: 1px solid rgba(110,217,138,0.32);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    padding: 5px 11px; border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .run-pill.paused {
+    background: rgba(240,174,92,0.18); color: var(--amber-2); border-color: rgba(240,174,92,0.36);
+  }
+  .run-pill.idle {
+    background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.10);
+  }
+  .run-pill .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+    box-shadow: 0 0 0 3px rgba(110,217,138,0.18);
+    animation: pulse 1.2s ease-out infinite;
+  }
+  .run-pill.idle .dot, .run-pill.paused .dot { animation: none; box-shadow: none; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+    100% { box-shadow: 0 0 0 8px transparent; opacity: 0.6; }
+  }
+  .part-of {
+    font-size: 13px; color: rgba(255,255,255,0.7); font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .part-of b {
+    color: white; font-weight: 700; font-size: 15px; margin: 0 2px;
+  }
+  .wallclock {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px; color: rgba(255,255,255,0.55);
+    letter-spacing: 0.06em;
+  }
+
+  /* Big timer */
+  .timer-wrap {
+    position: relative;
+    margin: 14px 0 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .timer {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 120px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: white;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.25);
+    display: inline-flex; align-items: baseline;
+  }
+  .timer .sec { color: rgba(255,255,255,0.95); }
+  .timer .tenths {
+    font-size: 60px; color: rgba(232,154,60,0.92);
+    margin-left: 2px;
+    width: 1.1ch; text-align: left;
+  }
+  .timer .colon { color: rgba(255,255,255,0.4); margin: 0 2px; }
+  .timer.over { color: #f88a72; }
+  .timer.over .tenths { color: #f88a72; }
+  .lap-current {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px; color: rgba(255,255,255,0.65);
+    letter-spacing: 0.04em;
+  }
+  .lap-current .dim { color: rgba(255,255,255,0.4); }
+  .lap-current b { color: white; font-weight: 700; }
+
+  /* Pace gauge */
+  .pace {
+    margin: 12px auto 0;
+    max-width: 540px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+  }
+  .pace .label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+  .pace .bar {
+    height: 8px; border-radius: 999px;
+    background: linear-gradient(90deg,
+      rgba(76,175,106,0.55) 0%,
+      rgba(212,165,49,0.55) 50%,
+      rgba(210,83,58,0.55) 100%);
+    position: relative;
+  }
+  .pace .bar .tick {
+    position: absolute; top: -2px; bottom: -2px;
+    width: 3px; background: white; border-radius: 2px;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.35);
+    transition: left 240ms ease;
+  }
+  .pace .bar .zero {
+    position: absolute; top: 0; bottom: 0; left: 50%;
+    width: 1px; background: rgba(255,255,255,0.35);
+  }
+  .pace .val { font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 700; font-size: 14px; color: white; min-width: 56px; text-align: right; }
+  .pace .val.fast { color: #6ed98a; }
+  .pace .val.slow { color: #f88a72; }
+
+  /* Action row */
+  .actions {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1.4fr 2fr 1.4fr;
+    gap: 10px;
+  }
+  .abtn {
+    appearance: none; border: 0; cursor: pointer;
+    border-radius: 16px;
+    padding: 22px 16px 18px;
+    color: white;
+    font: inherit; font-weight: 700;
+    text-align: left;
+    display: flex; align-items: center; gap: 14px;
+    transition: transform 80ms ease, filter 160ms ease;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.22), 0 1px 0 rgba(255,255,255,0.08) inset;
+  }
+  .abtn:hover { filter: brightness(1.08); }
+  .abtn:active { transform: translateY(1px); }
+  .abtn .ic { flex-shrink: 0; }
+  .abtn .lbl {
+    display: flex; flex-direction: column; gap: 2px; line-height: 1;
+  }
+  .abtn .lbl b { font-size: 20px; letter-spacing: -0.01em; font-weight: 700; }
+  .abtn .lbl small { font-size: 11px; font-weight: 500; opacity: 0.7; letter-spacing: 0.04em; }
+  .abtn.pause {
+    background: linear-gradient(180deg, #c98e3b 0%, #a86f24 100%);
+  }
+  .abtn.lap {
+    background: linear-gradient(180deg, #4faf6e 0%, #2e8c4d 100%);
+    justify-content: center;
+    text-align: center;
+  }
+  .abtn.lap .lbl b { font-size: 26px; }
+  .abtn.scrap {
+    background: linear-gradient(180deg, #cc5740 0%, #a23d2a 100%);
+  }
+  .abtn.idle { background: linear-gradient(180deg, #6ec888 0%, #3a9258 100%); }
+  .key {
+    background: rgba(0,0,0,0.28); color: rgba(255,255,255,0.85);
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    padding: 2px 6px; border-radius: 5px; font-weight: 600;
+    margin-left: auto;
+  }
+
+  /* Stats below hero */
+  .stats4 {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin-top: 14px;
+  }
+  .stat {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: var(--r-md); padding: 12px 14px;
+    box-shadow: var(--shadow-card);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat .l {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.10em;
+    color: var(--ink-3); text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .stat .l .ic { color: var(--ink-3); }
+  .stat .v {
+    font-size: 22px; font-weight: 600; letter-spacing: -0.02em;
+    color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.1;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .stat .v small { font-size: 11px; color: var(--ink-3); font-weight: 500; font-family: 'Inter', sans-serif; margin-left: 4px; }
+  .stat .d { font-size: 11px; color: var(--ink-3); font-weight: 500; }
+  .stat.bank .v { color: var(--green); }
+  .stat.bank.bad .v { color: var(--red); }
+
+  /* Sparkline strip */
+  .spark {
+    margin-top: 14px;
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: var(--r-md); box-shadow: var(--shadow-card);
+    padding: 14px 16px;
+  }
+  .spark-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .spark-head h3 {
+    margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -0.01em;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .spark-head h3 .ic { color: var(--ink-3); }
+  .spark-head .legend {
+    display: flex; gap: 12px; font-size: 11px; color: var(--ink-3); font-weight: 500;
+  }
+  .spark-head .legend i {
+    display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 4px; border-radius: 2px;
+  }
+
+  .spark svg { display: block; width: 100%; height: 84px; }
+
+  /* Right column: lap log */
+  .log {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+    display: flex; flex-direction: column;
+    min-height: 0;
+    align-self: stretch;
+  }
+  .log-head {
+    padding: 14px 18px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .log-head h2 {
+    margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .log-head h2 .ic { color: var(--ink-3); }
+  .log-head .seg {
+    display: flex; gap: 3px; padding: 3px;
+    background: var(--surface-2); border: 1px solid var(--hairline);
+    border-radius: 8px;
+  }
+  .log-head .seg button {
+    appearance: none; border: 0; background: transparent;
+    color: var(--ink-2); font: inherit; font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 5px; cursor: pointer;
+  }
+  .log-head .seg button[aria-pressed="true"] {
+    background: var(--surface); color: var(--ink); font-weight: 600;
+    box-shadow: 0 1px 2px rgba(26,29,36,0.06);
+  }
+
+  .log-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 4px 0;
+  }
+  .lap-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 80px 70px;
+    gap: 10px; align-items: center;
+    padding: 9px 18px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 13px;
+  }
+  .lap-row:last-child { border-bottom: 0; }
+  .lap-row:hover { background: var(--surface-2); }
+  .lap-row .n {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--ink-3); font-weight: 600; letter-spacing: 0.04em;
+  }
+  .lap-row .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--ink-2);
+  }
+  .lap-row .tag .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 5px; letter-spacing: 0.04em; text-transform: uppercase;
+    background: var(--green-soft); color: var(--green);
+  }
+  .lap-row .tag .pill.scrap { background: var(--red-soft); color: var(--red); }
+  .lap-row .tag .pill.rework { background: var(--amber-soft); color: var(--amber); }
+  .lap-row .tag .pill.first { background: var(--blue-soft); color: var(--blue); }
+  .lap-row .tag .time { color: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .lap-row .t {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: 14px; color: var(--ink); text-align: right;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+  }
+  .lap-row .d {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-align: right; font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  .lap-row .d.fast { color: var(--green); }
+  .lap-row .d.slow { color: var(--red); }
+  .lap-row .d.neutral { color: var(--ink-3); }
+  .lap-row.outlier { background: rgba(210,83,58,0.04); }
+  .lap-row.outlier .t { color: var(--red); }
+  .lap-row.first { background: rgba(70,119,200,0.03); }
+  .lap-row .note {
+    grid-column: 2 / span 3;
+    margin-top: 2px;
+    font-size: 11px; color: var(--ink-3); font-style: italic;
+  }
+
+  .log-foot {
+    padding: 12px 18px;
+    border-top: 1px solid var(--hairline);
+    background: var(--surface-2);
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-radius: 0 0 var(--r-lg) var(--r-lg);
+  }
+  .log-foot .cell {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 0 8px; border-right: 1px solid var(--hairline);
+  }
+  .log-foot .cell:last-child { border-right: 0; }
+  .log-foot .cell .l { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: var(--ink-3); text-transform: uppercase; }
+  .log-foot .cell .v { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
+  .log-foot .cell.good .v { color: var(--green); }
+  .log-foot .cell.scrap .v { color: var(--red); }
+  .log-foot .cell.rework .v { color: var(--amber); }
+
+  /* Bottom strip: pause reason chips + operator/machine */
+  .footstrip {
+    margin-top: 14px;
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: var(--r-md); box-shadow: var(--shadow-card);
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px; align-items: center;
+  }
+  .footstrip .l-grp { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .footstrip .reasons-lbl {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    color: var(--ink-3); text-transform: uppercase;
+    padding-right: 8px; border-right: 1px solid var(--hairline);
+  }
+  .reason {
+    appearance: none; border: 1px solid var(--hairline-2);
+    background: var(--surface-2); color: var(--ink-2);
+    border-radius: 999px; padding: 6px 12px;
+    font: inherit; font-size: 12px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  }
+  .reason:hover { background: var(--surface); color: var(--ink); }
+  .reason .ic { color: var(--ink-3); width: 13px; height: 13px; }
+  .reason.material { color: var(--blue); border-color: rgba(70,119,200,0.32); background: var(--blue-soft); }
+  .reason.tooling { color: var(--purple); border-color: rgba(139,95,191,0.32); background: var(--purple-soft); }
+  .reason.break   { color: var(--teal); border-color: rgba(58,154,175,0.32); background: var(--teal-soft); }
+  .reason.rework  { color: var(--amber); border-color: rgba(232,154,60,0.32); background: var(--amber-soft); }
+  .reason.fault   { color: var(--red); border-color: rgba(210,83,58,0.32); background: var(--red-soft); }
+  .reason .ic { color: currentColor; }
+
+  .who {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .who .avatar {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: var(--navy); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; letter-spacing: 0.04em;
+  }
+  .who .who-info { display: flex; flex-direction: column; line-height: 1.2; }
+  .who .who-info .name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .who .who-info .role { font-size: 11px; color: var(--ink-3); font-weight: 500; }
+  .who .machine {
+    border-left: 1px solid var(--hairline); padding-left: 12px; margin-left: 4px;
+    display: flex; flex-direction: column; line-height: 1.2;
+  }
+  .who .machine .lbl { font-size: 10px; color: var(--ink-3); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+  .who .machine .name { font-size: 13px; font-weight: 600; color: var(--ink); }
+
+  /* small util */
+  .ic { display: inline-block; vertical-align: middle; }
+
+  /* progress ring container around timer area */
+  .ring {
+    position: absolute; inset: 14px 0 0 0;
+    display: flex; align-items: flex-start; justify-content: center;
+    pointer-events: none;
+  }
+  .ring svg { width: 460px; height: 200px; }
+  .ring .ring-bg { stroke: rgba(255,255,255,0.06); }
+  .ring .ring-fg { stroke: var(--amber); transition: stroke-dashoffset 320ms ease; }
+
+  @media (max-width: 1280px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .stats4 { grid-template-columns: repeat(2, 1fr); }
+    .ring { display: none; }
+  }
+  @media (max-width: 980px) {
+    .app { grid-template-columns: 1fr; }
+    .side { position: relative; height: auto; }
+    .timer { font-size: 84px; }
+    .timer .tenths { font-size: 42px; }
+    .actions { grid-template-columns: 1fr; }
+    .job { grid-template-columns: 1fr; }
+    .job .quick { border-left: 0; padding-left: 0; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Icon defs -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h2a2 2 0 0 1 2 2v2"/><path d="M22 12h-2a2 2 0 0 0-2-2v-2"/><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 7.76a6 6 0 0 0 0 8.49"/></symbol>
+    <symbol id="i-check-sq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2M15 18H9M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-pkg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+    <symbol id="i-machine" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-factory" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.2 8.4 8 9 4.8-.6 8-4.5 8-9V6l-8-3Z"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l14 8-14 8z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22V15"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l4-4 4 3 6-7 4 4"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-bank" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6M15 21v-6M9 11h6"/></symbol>
+    <symbol id="i-coffee" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></symbol>
+    <symbol id="i-tool" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0 5 5L17 14l5 5-3 3-5-5-2.7 2.7a4 4 0 0 1-5-5L4 12l-1-1 3-3 1 1 2.7-2.7a4 4 0 0 1 5-5z"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+  </defs>
+</svg>
+
+<style>
+  /* default svg stroke for all symbols */
+  svg use { stroke-width: 1.8; }
+  svg.ic { width: 16px; height: 16px; }
+  svg[class*="ic"] { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="side">
+    <div class="brand">
+      <div class="mark">
+        <svg width="28" height="28" viewBox="0 0 64 64">
+          <defs><linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f6f3ec"/></linearGradient></defs>
+          <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#lg2)" stroke="rgba(26,29,36,0.10)"/>
+          <circle cx="44" cy="22" r="5" fill="#e89a3c"/>
+          <path d="M6 46 L20 28 L28 38 L40 22 L52 46 Z" fill="#1f2a44"/>
+        </svg>
+      </div>
+      <div class="name">
+        <b><em>elmo's</em> Production</b>
+        <span>Steelworks · Plant 2</span>
+      </div>
+    </div>
+
+    <div class="ctx-card">
+      <div class="role-pill">Operator</div>
+      <div class="row"><svg class="ic"><use href="#i-factory"/></svg> <span>Steel · Tube Laser</span></div>
+      <div class="row"><svg class="ic"><use href="#i-users"/></svg> <span>signed in as <b>J. Pretorius</b></span></div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-title">Production</div>
+      <a class="nav-item" href="Dashboard.html"><svg class="ic"><use href="#i-grid"/></svg> Dashboard</a>
+      <a class="nav-item" href="Priority.html"><svg class="ic"><use href="#i-list"/></svg> Priority</a>
+      <a class="nav-item" href="Week Plan.html"><svg class="ic"><use href="#i-cal"/></svg> Week Plan</a>
+      <a class="nav-item" href="Schedule.html"><svg class="ic"><use href="#i-wave"/></svg> Schedule</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-title">Tracking</div>
+      <a class="nav-item" href="Part Tracking.html"><svg class="ic"><use href="#i-check-sq"/></svg> Tracking</a>
+      <a class="nav-item" aria-current="page"><svg class="ic"><use href="#i-stop"/></svg> MES Station</a>
+      <a class="nav-item" href="Dispatch Plan.html"><svg class="ic"><use href="#i-truck"/></svg> Dispatch</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-title">Config</div>
+      <a class="nav-item" href="Products.html"><svg class="ic"><use href="#i-pkg"/></svg> Products</a>
+      <a class="nav-item" href="Machines.html"><svg class="ic"><use href="#i-machine"/></svg> Machines</a>
+      <a class="nav-item" href="Customers.html"><svg class="ic"><use href="#i-users"/></svg> Customers</a>
+    </div>
+
+    <div class="side-foot">
+      <div class="util-row">
+        <button class="util-btn"><svg class="ic" style="width:12px;height:12px"><use href="#i-down"/></svg>Export</button>
+        <button class="util-btn"><svg class="ic" style="width:12px;height:12px"><use href="#i-shield"/></svg>Backups</button>
+        <button class="util-btn"><svg class="ic" style="width:12px;height:12px"><use href="#i-up"/></svg>Import</button>
+      </div>
+      <button class="signout"><svg class="ic"><use href="#i-logout"/></svg> Logout</button>
+      <div class="meta-foot">
+        <div class="sync"><span class="dot"></span> Synced 14:53</div>
+        <div>14 May 2026 · Thursday</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- breadcrumb -->
+    <div class="crumb">
+      <a href="Schedule.html"><svg class="ic" style="width:14px;height:14px"><use href="#i-back"/></svg> Schedule</a>
+      <span class="sep">/</span>
+      <a href="#">Wk 19 · Day 4</a>
+      <span class="sep">/</span>
+      <a href="#">Order 043</a>
+      <span class="sep">/</span>
+      <span class="here">Bowtie Pote</span>
+      <button class="close" onclick="window.history.back()"><svg class="ic" style="width:13px;height:13px"><use href="#i-x"/></svg> Close station</button>
+    </div>
+
+    <!-- Job banner -->
+    <div class="job">
+      <div class="swatch">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <!-- bowtie-ish glyph -->
+          <path d="M4 7 L11 12 L4 17 Z"/>
+          <path d="M20 7 L13 12 L20 17 Z"/>
+          <circle cx="12" cy="12" r="1.4" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="info">
+        <div class="l1">
+          <span class="ord">Order 043</span>
+          <span class="sep">·</span>
+          <span class="pri">PRI 5</span>
+          <span class="sep">·</span>
+          <span class="step-pill">● Tube Laser · Step 1 of 4</span>
+        </div>
+        <h1>Bowtie Pote</h1>
+        <div class="meta">
+          <span>Customer <b>KFC South Africa</b></span>
+          <span class="sep">·</span>
+          <span>Drawing <b>KFC-BWP-220.04</b></span>
+          <span class="sep">·</span>
+          <span>Std cycle <b>1m 30s</b></span>
+          <span class="sep">·</span>
+          <span>Tube <b>40×40×1.6 — Bay 7</b></span>
+        </div>
+      </div>
+      <div class="quick">
+        <div class="lbl">Batch target</div>
+        <div class="qty">20 <small>pcs</small></div>
+        <div class="due">Due Wk19 · Fri</div>
+      </div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="grid2">
+
+      <!-- LEFT -->
+      <div class="left-col">
+
+        <!-- HERO TIMER -->
+        <section class="hero">
+          <!-- progress ring along top arc -->
+          <div class="ring" aria-hidden="true">
+            <svg viewBox="0 0 460 200">
+              <path class="ring-bg" d="M 20,180 A 210,210 0 0,1 440,180" fill="none" stroke-width="2.5"/>
+              <path id="ringFg" class="ring-fg" d="M 20,180 A 210,210 0 0,1 440,180"
+                    fill="none" stroke-width="3" stroke-linecap="round"
+                    stroke-dasharray="660" stroke-dashoffset="462"/>
+            </svg>
+          </div>
+
+          <div class="hero-top">
+            <div class="run-pill" id="runPill"><span class="dot"></span> <span id="runLbl">Running</span></div>
+            <div class="part-of">Part <b id="partNo">7</b> of <b id="partTotal">20</b></div>
+            <div class="wallclock" id="wallclock">14:53:21</div>
+          </div>
+
+          <div class="timer-wrap">
+            <div class="timer" id="timer">
+              <span class="sec" id="tMin">01</span><span class="colon">:</span><span class="sec" id="tSec">24</span><span class="tenths" id="tT">.7</span>
+            </div>
+            <div class="lap-current">
+              <span class="dim">total elapsed</span>
+              <b id="tTotal">18m 47s</b>
+              <span class="dim">·</span>
+              <span class="dim">eta</span>
+              <b id="tEta">16:42</b>
+            </div>
+          </div>
+
+          <div class="pace">
+            <div class="label">Pace vs std</div>
+            <div class="bar">
+              <div class="zero"></div>
+              <div class="tick" id="paceTick" style="left: 38%"></div>
+            </div>
+            <div class="val fast" id="paceVal">−12%</div>
+          </div>
+
+          <div class="actions">
+            <button class="abtn pause" id="btnPause">
+              <svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-pause"/></svg>
+              <span class="lbl"><b>Pause</b><small>+ reason</small></span>
+              <span class="key">P</span>
+            </button>
+            <button class="abtn lap" id="btnLap">
+              <svg width="28" height="28" viewBox="0 0 24 24"><use href="#i-check"/></svg>
+              <span class="lbl"><b>Lap +1</b><small>part complete</small></span>
+              <span class="key" style="background:rgba(0,0,0,0.32)">SPACE</span>
+            </button>
+            <button class="abtn scrap" id="btnScrap">
+              <svg width="22" height="22" viewBox="0 0 24 24"><use href="#i-trash"/></svg>
+              <span class="lbl"><b>Scrap</b><small>− log reason</small></span>
+              <span class="key">S</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- KPI strip -->
+        <div class="stats4">
+          <div class="stat">
+            <div class="l"><svg class="ic" style="width:12px;height:12px"><use href="#i-spark"/></svg> Avg Cycle</div>
+            <div class="v" id="kAvg">1:18<small>per part</small></div>
+            <div class="d">last 5: 1:14 · 1:09 · 1:22 · 1:17 · 1:11</div>
+          </div>
+          <div class="stat">
+            <div class="l"><svg class="ic" style="width:12px;height:12px"><use href="#i-bolt"/></svg> Best Lap</div>
+            <div class="v" id="kBest">1:09</div>
+            <div class="d">Part 5 · 14:31</div>
+          </div>
+          <div class="stat">
+            <div class="l"><svg class="ic" style="width:12px;height:12px"><use href="#i-target"/></svg> Std Time</div>
+            <div class="v" id="kStd">1:30<small>quoted</small></div>
+            <div class="d">−12s avg · ahead of quote</div>
+          </div>
+          <div class="stat bank">
+            <div class="l"><svg class="ic" style="width:12px;height:12px"><use href="#i-bank"/></svg> Time Banked</div>
+            <div class="v" id="kBank">+1m 12s</div>
+            <div class="d">vs quoted std for 6 parts</div>
+          </div>
+        </div>
+
+        <!-- Sparkline -->
+        <div class="spark">
+          <div class="spark-head">
+            <h3><svg class="ic"><use href="#i-spark"/></svg> Cycle trend · last 6 laps</h3>
+            <div class="legend">
+              <span><i style="background:var(--ink-2)"></i>actual</span>
+              <span><i style="background:rgba(232,154,60,0.55); height:1.5px; border-top:1.5px dashed var(--amber)"></i>std (1:30)</span>
+              <span><i style="background:var(--green)"></i>−<i style="background:var(--red); margin-left:6px"></i>+</span>
+            </div>
+          </div>
+          <svg viewBox="0 0 600 80" preserveAspectRatio="none">
+            <!-- standard line at 1:30 -->
+            <line x1="0" y1="22" x2="600" y2="22" stroke="var(--amber)" stroke-width="1.2" stroke-dasharray="5 5" opacity="0.7"/>
+            <!-- under-std band (good) -->
+            <rect x="0" y="22" width="600" height="58" fill="var(--green)" opacity="0.05"/>
+            <!-- area path -->
+            <path d="M 30 36 L 130 50 L 230 28 L 330 56 L 430 40 L 530 52 L 600 52 L 600 80 L 0 80 Z" fill="var(--ink)" opacity="0.04"/>
+            <!-- line -->
+            <path d="M 30 36 L 130 50 L 230 28 L 330 56 L 430 40 L 530 52" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- dots: green if under std (y > 22) ... wait, y > 22 means BELOW std line visually = lap LONGER. let me think. SVG y increases downward. Std line is at y=22 (faster top = better). y > 22 is slower than std. y < 22 is faster than std. Actually we want green = faster (under std time). std=1:30=90s. avg ~1:18=78s = below standard time = faster. faster cycle = lower number = good. In our chart, smaller y is closer to top. We chose y=22 for std. Faster (78s) plots LOWER y. So y < 22 = faster = green. -->
+            <circle cx="30"  cy="36" r="4" fill="var(--ink)"/>
+            <circle cx="130" cy="50" r="4" fill="var(--ink)"/>
+            <circle cx="230" cy="28" r="4" fill="var(--green)"/>
+            <circle cx="330" cy="56" r="4" fill="var(--ink)"/>
+            <circle cx="430" cy="40" r="4" fill="var(--ink)"/>
+            <circle cx="530" cy="52" r="4" fill="var(--ink)"/>
+            <!-- annotation: best -->
+            <g transform="translate(230 14)">
+              <text font-family="Inter" font-size="9" font-weight="700" fill="var(--green)" text-anchor="middle">BEST 1:09</text>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Footstrip: reason codes -->
+        <div class="footstrip">
+          <span class="reasons-lbl">Pause for</span>
+          <div class="l-grp">
+            <button class="reason material"><svg class="ic"><use href="#i-cube"/></svg> Material wait</button>
+            <button class="reason tooling"><svg class="ic"><use href="#i-tool"/></svg> Tooling change</button>
+            <button class="reason break"><svg class="ic"><use href="#i-coffee"/></svg> Break</button>
+            <button class="reason rework"><svg class="ic" style="width:13px;height:13px"><use href="#i-flag"/></svg> Rework</button>
+            <button class="reason fault"><svg class="ic"><use href="#i-bolt"/></svg> Machine fault</button>
+          </div>
+          <div class="who">
+            <div class="avatar">JP</div>
+            <div class="who-info">
+              <span class="name">J. Pretorius</span>
+              <span class="role">Operator · Shift A</span>
+            </div>
+            <div class="machine">
+              <span class="lbl">Machine</span>
+              <span class="name">Tube Laser BN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Lap log -->
+      <aside class="log">
+        <div class="log-head">
+          <h2><svg class="ic"><use href="#i-list"/></svg> Lap Log</h2>
+          <div class="seg">
+            <button aria-pressed="true">All</button>
+            <button>Good</button>
+            <button>Flags</button>
+          </div>
+        </div>
+        <div class="log-body" id="logBody">
+
+          <div class="lap-row first">
+            <span class="n">01</span>
+            <span class="tag"><span class="pill first">First piece</span><span class="time">14:14</span></span>
+            <span class="t">2:48</span>
+            <span class="d slow">+1:18</span>
+            <span class="note">First-piece + setup — excluded from average</span>
+          </div>
+          <div class="lap-row">
+            <span class="n">02</span>
+            <span class="tag"><span class="pill">Good</span><span class="time">14:17</span></span>
+            <span class="t">1:22</span>
+            <span class="d fast">−0:08</span>
+          </div>
+          <div class="lap-row">
+            <span class="n">03</span>
+            <span class="tag"><span class="pill">Good</span><span class="time">14:18</span></span>
+            <span class="t">1:17</span>
+            <span class="d fast">−0:13</span>
+          </div>
+          <div class="lap-row">
+            <span class="n">04</span>
+            <span class="tag"><span class="pill rework">Rework</span><span class="time">14:23</span></span>
+            <span class="t">4:42</span>
+            <span class="d slow">+3:12</span>
+            <span class="note">Bend angle off · re-jigged</span>
+          </div>
+          <div class="lap-row">
+            <span class="n">05</span>
+            <span class="tag"><span class="pill">Good</span><span class="time">14:24</span></span>
+            <span class="t" style="color:var(--green)">1:09</span>
+            <span class="d fast">−0:21</span>
+            <span class="note">★ Personal best</span>
+          </div>
+          <div class="lap-row outlier">
+            <span class="n">06</span>
+            <span class="tag"><span class="pill scrap">Scrap</span><span class="time">14:28</span></span>
+            <span class="t">3:24</span>
+            <span class="d slow">+1:54</span>
+            <span class="note">Burr on flange — drawing rev'd</span>
+          </div>
+          <div class="lap-row">
+            <span class="n">07</span>
+            <span class="tag"><span class="pill">Good</span><span class="time">14:31</span></span>
+            <span class="t">1:22</span>
+            <span class="d fast">−0:08</span>
+          </div>
+          <div class="lap-row" style="background:rgba(232,154,60,0.05); border-left: 3px solid var(--amber)">
+            <span class="n">⏸</span>
+            <span class="tag"><span class="pill" style="background:var(--purple-soft); color:var(--purple)">Tooling</span><span class="time">14:36</span></span>
+            <span class="t">8:14</span>
+            <span class="d neutral">paused</span>
+            <span class="note">Lens change · clean & re-cal</span>
+          </div>
+          <div class="lap-row">
+            <span class="n">08</span>
+            <span class="tag"><span class="pill">Good</span><span class="time">14:45</span></span>
+            <span class="t">1:14</span>
+            <span class="d fast">−0:16</span>
+          </div>
+          <div class="lap-row">
+            <span class="n">09</span>
+            <span class="tag"><span class="pill">Good</span><span class="time">14:47</span></span>
+            <span class="t">1:11</span>
+            <span class="d fast">−0:19</span>
+          </div>
+
+        </div>
+        <div class="log-foot">
+          <div class="cell good">
+            <span class="l">Good</span>
+            <span class="v">6</span>
+          </div>
+          <div class="cell rework">
+            <span class="l">Rework</span>
+            <span class="v">1</span>
+          </div>
+          <div class="cell scrap">
+            <span class="l">Scrap</span>
+            <span class="v">1</span>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ─── Interactive stopwatch ─────────────────────────────────────────────────
+const STD_SEC = 90; // 1m 30s standard
+let runState = 'running'; // 'running' | 'paused' | 'stopped'
+let startMs = Date.now() - 84_700; // started ~84.7s ago so it opens mid-lap
+
+const elTimer = {
+  min: document.getElementById('tMin'),
+  sec: document.getElementById('tSec'),
+  ten: document.getElementById('tT'),
+  total: document.getElementById('tTotal'),
+  eta: document.getElementById('tEta'),
+  wall: document.getElementById('wallclock'),
+  pill: document.getElementById('runPill'),
+  pillLbl: document.getElementById('runLbl'),
+  partNo: document.getElementById('partNo'),
+  ring: document.getElementById('ringFg'),
+  paceTick: document.getElementById('paceTick'),
+  paceVal: document.getElementById('paceVal'),
+};
+
+function pad(n, w=2) { return String(n).padStart(w, '0'); }
+
+function fmtClock(d) {
+  return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+
+function tick() {
+  if (runState !== 'running') return;
+  const elapsedMs = Date.now() - startMs;
+  const tot = elapsedMs / 1000;
+  const m = Math.floor(tot / 60);
+  const s = Math.floor(tot % 60);
+  const t = Math.floor((tot * 10) % 10);
+  elTimer.min.textContent = pad(m);
+  elTimer.sec.textContent = pad(s);
+  elTimer.ten.textContent = '.' + t;
+
+  // wall clock
+  elTimer.wall.textContent = fmtClock(new Date());
+
+  // pace tick (relative to STD_SEC) — midpoint=50%, faster=left, slower=right, range ±50%
+  const delta = (tot - STD_SEC) / STD_SEC; // negative = faster
+  const clamped = Math.max(-0.5, Math.min(0.5, delta));
+  const left = 50 + clamped * 100; // 0..100
+  elTimer.paceTick.style.left = left + '%';
+  const pct = Math.round(delta * 100);
+  elTimer.paceVal.textContent = (pct >= 0 ? '+' : '−') + Math.abs(pct) + '%';
+  elTimer.paceVal.classList.toggle('fast', pct < 0);
+  elTimer.paceVal.classList.toggle('slow', pct > 5);
+
+  // over-std color
+  document.getElementById('timer').classList.toggle('over', tot > STD_SEC * 1.2);
+}
+setInterval(tick, 100);
+tick();
+
+// Buttons
+document.getElementById('btnLap').addEventListener('click', () => {
+  // tiny visual pulse — increment part counter
+  const n = parseInt(elTimer.partNo.textContent, 10) + 1;
+  if (n <= 20) elTimer.partNo.textContent = n;
+  // reset stopwatch
+  startMs = Date.now();
+  // advance ring (20 parts = full arc, 660 dash length)
+  const dash = 660;
+  const progress = (n - 1) / 20;
+  elTimer.ring.setAttribute('stroke-dashoffset', dash * (1 - progress));
+});
+
+document.getElementById('btnPause').addEventListener('click', () => {
+  if (runState === 'running') {
+    runState = 'paused';
+    elTimer.pill.classList.add('paused');
+    elTimer.pillLbl.textContent = 'Paused';
+  } else {
+    runState = 'running';
+    elTimer.pill.classList.remove('paused');
+    elTimer.pillLbl.textContent = 'Running';
+    // restart from where it left off conceptually — keep simple: reset
+    startMs = Date.now();
+  }
+});
+
+document.getElementById('btnScrap').addEventListener('click', () => {
+  // visual stub — could push a scrap row into the log
+  alert('Scrap logged — drop a reason in the next dialog.');
+});
+
+// keyboard shortcuts: SPACE = lap, P = pause, S = scrap
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); document.getElementById('btnLap').click(); }
+  if (e.key === 'p' || e.key === 'P') document.getElementById('btnPause').click();
+  if (e.key === 's' || e.key === 'S') document.getElementById('btnScrap').click();
+});
+
+// initial ring fill (6 completed of 20)
+elTimer.ring.setAttribute('stroke-dashoffset', 660 * (1 - 6/20));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>elmo's Production — Machines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="elmo-base.css" />
+<style>
+  .add-grid { grid-template-columns: 1.4fr 1.4fr 1fr 1fr; }
+  .add-grid .bottleneck { grid-column: 1 / 3; display: flex; flex-direction: column; gap: 6px; }
+  .add-grid .bottleneck label { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--ink-2); cursor: pointer; }
+  .add-grid .bottleneck input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--navy); }
+  .add-grid .add-btn-cell { grid-column: 3 / -1; display: flex; align-items: flex-end; justify-content: flex-end; }
+  .add-btn { background: var(--navy); color: white; border: 0; padding: 10px 18px; border-radius: 9px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 14px rgba(31,42,68,0.22); display: inline-flex; align-items: center; gap: 6px; }
+
+  .machines-card h3 { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; }
+  .mach-row { display: grid; grid-template-columns: 14px 1fr auto auto auto auto; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--hairline); }
+  .mach-row:first-of-type { border-top: 0; }
+  .mach-row .swatch { width: 10px; height: 10px; border-radius: 50%; }
+  .mach-row .info .name { font-size: 14px; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .mach-row .info .name .bn { background: var(--amber-soft); color: var(--amber); font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .mach-row .info .status { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-top: 2px; }
+  .mach-row .info .status.active { color: var(--green); }
+  .mach-row .util { text-align: right; font-variant-numeric: tabular-nums; }
+  .mach-row .util .pct { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .mach-row .util .min { font-size: 10px; color: var(--ink-3); font-weight: 500; }
+  .toggle { width: 38px; height: 22px; background: var(--green); border-radius: 999px; position: relative; cursor: pointer; transition: background 160ms; }
+  .toggle.off { background: var(--surface-3); }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 18px; width: 18px; height: 18px; background: white; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: left 160ms; }
+  .toggle.off::after { left: 2px; }
+  .mach-row .edit-btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; font-size: 11px; font-weight: 600; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--hairline-2); border-radius: 7px; cursor: pointer; }
+  .mach-row .del-btn { display: inline-flex; align-items: center; padding: 6px 10px; font-size: 11px; font-weight: 600; color: var(--red); background: var(--red-soft); border: 1px solid rgba(210,83,58,0.25); border-radius: 7px; cursor: pointer; }
+</style>
+</head>
+<body data-theme="light">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react" src="shared-chrome.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState } = React;
+
+const MACHINES = [
+  { name: 'Cutt off', color: '#d2533a', util: 22, min: 113 },
+  { name: 'Tube Laser', color: '#4677c8', util: 14, min: 73, bn: true },
+  { name: 'Swage', color: '#e89a3c', util: 0, min: 0 },
+  { name: 'E40', color: '#4caf6a', util: 0, min: 0 },
+  { name: 'E32', color: '#8b5fbf', util: 0, min: 0 },
+  { name: 'End Closing', color: '#4caf6a', util: 0, min: 0 },
+  { name: 'Weld (Robot)', color: '#9aa0ad', util: 0, min: 0 },
+  { name: 'Weld (Arrie)', color: '#4677c8', util: 0, min: 0 },
+  { name: 'Weld (Dino)', color: '#e89a3c', util: 0, min: 0 },
+  { name: 'Grind', color: '#3a9aaf', util: 0, min: 0 },
+  { name: 'Paint', color: '#1f2a44', util: 0, min: 0 },
+];
+
+function MachRow({ m }) {
+  const [on, setOn] = useState(true);
+  return (
+    <div className="mach-row">
+      <span className="swatch" style={{background: m.color}}/>
+      <div className="info">
+        <div className="name">{m.name} {m.bn && <span className="bn">Bottleneck</span>}</div>
+        <div className={`status ${on ? 'active' : ''}`}>{on ? 'Active' : 'Disabled'}</div>
+      </div>
+      <div className="util">
+        <div className="pct">{m.util}%</div>
+        <div className="min">{m.min}min</div>
+      </div>
+      <div className={`toggle ${on ? '' : 'off'}`} onClick={() => setOn(!on)}/>
+      <button className="edit-btn"><I n="edit" s={11}/> Edit</button>
+      <button className="del-btn">Del</button>
+    </div>
+  );
+}
+
+function Stepper({ value = 0, step = 5 }) {
+  const [v, setV] = useState(value);
+  return (
+    <div className="stepper">
+      <button onClick={() => setV(v - step)}>−{step}</button>
+      <button onClick={() => setV(Math.max(0, v - 1))}>−</button>
+      <input value={v} onChange={e => setV(Number(e.target.value) || 0)}/>
+      <button onClick={() => setV(v + 1)}>+</button>
+      <button onClick={() => setV(v + step)}>+{step}</button>
+    </div>
+  );
+}
+
+function App() {
+  const [dept, setDept] = useState('steel');
+  const [theme, setTheme] = useState('light');
+  React.useEffect(() => { document.body.dataset.theme = theme; }, [theme]);
+
+  return (
+    <div className="app">
+      <Sidebar active="mach"/>
+      <main className="main">
+        <div className="topbar">
+          <div>
+            <h1>Machines</h1>
+            <div className="sub">Add and manage production stations</div>
+          </div>
+          <div className="topbar-actions">
+            <button className="ibtn"><I n="search" s={13}/> Find Order</button>
+            <button className="ibtn"><I n="clock" s={13}/> End of Day</button>
+            <button className="ibtn"><I n="key" s={13}/> Passwords</button>
+            <button className="ibtn" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+              <I n={theme === 'light' ? 'moon' : 'sun'} s={13}/>{theme === 'light' ? 'Dark' : 'Light'}
+            </button>
+            <button className="ibtn primary"><I n="print" s={13}/> Print</button>
+          </div>
+        </div>
+
+        <div className="filter-bar">
+          <div className="dept-tabs">
+            <button className="dept-tab" aria-pressed={dept==='all'} onClick={()=>setDept('all')}><I n="grid" s={12}/> All Depts</button>
+            <button className="dept-tab" aria-pressed={dept==='steel'} onClick={()=>setDept('steel')}><I n="hammer" s={12}/> Steel</button>
+            <button className="dept-tab" aria-pressed={dept==='wood'} onClick={()=>setDept('wood')}><I n="saw" s={12}/> Wood</button>
+            <button className="dept-tab" aria-pressed={dept==='uphol'} onClick={()=>setDept('uphol')}><I n="thread" s={12}/> Upholstery</button>
+            <button className="dept-tab" aria-pressed={dept==='disp'} onClick={()=>setDept('disp')}><I n="truck" s={12}/> Dispatching</button>
+          </div>
+        </div>
+
+        <div className="dept-banner">
+          <span className="badge"><I n="factory" s={12}/> Steel Department</span>
+          <span>— showing Steel products & machines only</span>
+        </div>
+
+        <div className="card">
+          <h3 style={{marginBottom:14}}>Add Machine / Station</h3>
+          <div className="field-grid add-grid">
+            <div className="field"><label>Machine Name</label><input placeholder="e.g. Tube Laser"/></div>
+            <div className="field"><label>Area / Station</label><input placeholder="e.g. Cutting Bay"/></div>
+            <div className="field"><label>Setup Time (min)</label><Stepper value={0} step={5}/></div>
+            <div className="field"><label>Colour</label>
+              <select>
+                <option>Red</option><option>Blue</option><option>Amber</option><option>Green</option><option>Purple</option><option>Teal</option><option>Navy</option>
+              </select>
+            </div>
+            <div className="bottleneck">
+              <label style={{fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', letterSpacing: 0.02}}>Bottleneck Machine</label>
+              <label><input type="checkbox"/> Priority feed (never idle)</label>
+            </div>
+            <div className="add-btn-cell">
+              <button className="add-btn"><I n="plus" s={12}/> Add Machine</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="card machines-card">
+          <h3>Machines</h3>
+          {MACHINES.map(m => <MachRow key={m.name} m={m}/>)}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

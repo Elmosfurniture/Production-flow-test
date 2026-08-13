@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>elmo's Production — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --bg-2: #ece8e0;
+    --surface: #ffffff;
+    --surface-2: #fbf9f5;
+    --surface-3: #f1eee7;
+    --ink: #1a1d24;
+    --ink-2: #4a4e5a;
+    --ink-3: #8a8e99;
+    --hairline: rgba(26,29,36,0.08);
+    --hairline-2: rgba(26,29,36,0.12);
+
+    --navy: #1f2a44;
+    --navy-2: #2a3656;
+    --navy-soft: rgba(31,42,68,0.08);
+
+    --amber: #e89a3c;
+    --amber-2: #f0ae5c;
+    --amber-soft: rgba(232,154,60,0.14);
+
+    --red: #d2533a;
+    --red-soft: rgba(210,83,58,0.10);
+    --green: #4caf6a;
+    --green-soft: rgba(76,175,106,0.12);
+    --yellow: #d4a531;
+    --yellow-soft: rgba(212,165,49,0.14);
+
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.04), 0 8px 20px rgba(26,29,36,0.04);
+    --shadow-pop:  0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.06), 0 12px 28px rgba(26,29,36,0.08);
+    --shadow-btn:  0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 16px rgba(31,42,68,0.24), 0 2px 4px rgba(31,42,68,0.16);
+
+    --r-sm: 12px;
+    --r-md: 16px;
+    --r-lg: 22px;
+    --r-xl: 28px;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0e1118;
+    --bg-2: #131722;
+    --surface: #1a1f2c;
+    --surface-2: #20263488;
+    --surface-3: #232938;
+    --ink: #f1f2f5;
+    --ink-2: #b8bcc8;
+    --ink-3: #7c8090;
+    --hairline: rgba(255,255,255,0.07);
+    --hairline-2: rgba(255,255,255,0.12);
+    --navy: #2e3d63;
+    --navy-2: #3a4b76;
+    --navy-soft: rgba(88,114,180,0.18);
+    --amber: #f0ae5c;
+    --amber-2: #f5c178;
+    --amber-soft: rgba(240,174,92,0.16);
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 20px rgba(0,0,0,0.4);
+    --shadow-pop:  0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 28px rgba(0,0,0,0.45);
+    --shadow-btn:  0 1px 0 rgba(255,255,255,0.12) inset, 0 6px 16px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100vh;
+    font-family: 'Inter', -apple-system, 'SF Pro Text', system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    letter-spacing: -0.01em;
+    background:
+      radial-gradient(120% 80% at 50% 0%, var(--surface-2) 0%, var(--bg) 40%, var(--bg-2) 100%);
+  }
+
+  /* ───── Layout ───── */
+  .app {
+    display: grid;
+    grid-template-columns: 256px 1fr;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .side {
+    background: var(--surface);
+    border-right: 1px solid var(--hairline);
+    padding: 18px 14px 18px;
+    display: flex; flex-direction: column; gap: 14px;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px; padding: 4px 6px 8px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .brand .mark {
+    width: 38px; height: 38px; border-radius: 12px;
+    border: 1px solid var(--hairline-2);
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface-2);
+    box-shadow: 0 1px 2px rgba(26,29,36,0.04);
+  }
+  .brand .name {
+    line-height: 1.1;
+  }
+  .brand .name b {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.02em;
+    display: block;
+  }
+  .brand .name b em { font-style: normal; color: var(--amber); }
+  .brand .name span {
+    font-size: 11px; color: var(--ink-3); font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .ctx-card {
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    padding: 12px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .ctx-card .row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--ink-2); font-weight: 500;
+  }
+  .ctx-card .row .ic { width: 16px; height: 16px; color: var(--ink-3); }
+  .ctx-card .row b { color: var(--ink); font-weight: 600; }
+  .ctx-card .role-pill {
+    align-self: flex-start;
+    background: var(--navy);
+    color: white;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .nav-group { display: flex; flex-direction: column; gap: 2px; }
+  .nav-title {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    color: var(--ink-3); text-transform: uppercase;
+    padding: 8px 10px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease;
+    border: 1px solid transparent;
+  }
+  .nav-item .ic { width: 18px; height: 18px; flex-shrink: 0; color: var(--ink-3); }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item[aria-current="page"] {
+    background: var(--navy-soft);
+    color: var(--navy);
+    font-weight: 600;
+  }
+  .nav-item[aria-current="page"] .ic { color: var(--navy); }
+  [data-theme="dark"] .nav-item[aria-current="page"] {
+    background: var(--navy-soft);
+    color: var(--amber-2);
+  }
+  [data-theme="dark"] .nav-item[aria-current="page"] .ic { color: var(--amber-2); }
+
+  .side-foot {
+    margin-top: auto;
+    display: flex; flex-direction: column; gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--hairline);
+  }
+  .util-row {
+    display: flex; gap: 6px;
+  }
+  .util-btn {
+    flex: 1;
+    appearance: none; border: 1px solid var(--hairline-2);
+    background: var(--surface-2);
+    color: var(--ink-2);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font: inherit; font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer;
+  }
+  .util-btn:hover { background: var(--surface); color: var(--ink); }
+  .util-btn .ic { width: 13px; height: 13px; }
+
+  .signout {
+    width: 100%; appearance: none; border: 1px solid var(--hairline-2);
+    background: var(--surface-2); color: var(--ink-2);
+    border-radius: 12px; padding: 10px;
+    font: inherit; font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer;
+  }
+  .signout:hover { background: var(--red-soft); color: var(--red); border-color: var(--red); }
+
+  .meta-foot {
+    font-size: 11px; color: var(--ink-3);
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 6px 4px 0;
+  }
+  .meta-foot .sync { display: flex; align-items: center; gap: 6px; }
+  .meta-foot .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  /* Main */
+  .main {
+    padding: 22px 28px 60px;
+    min-width: 0;
+  }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; margin-bottom: 18px;
+  }
+  .topbar h1 {
+    font-size: 28px; font-weight: 600; letter-spacing: -0.025em;
+    margin: 0; line-height: 1.1;
+  }
+  .topbar .sub {
+    font-size: 14px; color: var(--ink-2); margin-top: 4px;
+  }
+
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .ibtn {
+    appearance: none; border: 1px solid var(--hairline-2);
+    background: var(--surface);
+    color: var(--ink); font: inherit; font-size: 13px; font-weight: 500;
+    padding: 9px 14px;
+    border-radius: 12px;
+    display: inline-flex; align-items: center; gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(26,29,36,0.04);
+    transition: transform 100ms ease, background 160ms ease;
+  }
+  .ibtn:hover { background: var(--surface-2); }
+  .ibtn:active { transform: scale(0.98); }
+  .ibtn .ic { width: 15px; height: 15px; color: var(--ink-2); }
+  .ibtn.primary {
+    background: var(--navy); color: white; border-color: var(--navy);
+    box-shadow: var(--shadow-btn);
+  }
+  .ibtn.primary .ic { color: var(--amber-2); }
+  .ibtn.primary:hover { background: var(--navy-2); }
+
+  /* Department tabs */
+  .dept-tabs {
+    display: flex; gap: 6px;
+    padding: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    margin-bottom: 16px;
+    width: fit-content;
+  }
+  .dept-tab {
+    appearance: none; border: 0;
+    background: transparent;
+    color: var(--ink-2);
+    font: inherit; font-size: 13px; font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px;
+    transition: background 160ms ease, color 160ms ease;
+  }
+  .dept-tab .ic { width: 15px; height: 15px; color: var(--ink-3); }
+  .dept-tab:hover { color: var(--ink); }
+  .dept-tab[aria-pressed="true"] {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.06), 0 2px 6px rgba(26,29,36,0.06);
+    font-weight: 600;
+  }
+  .dept-tab[aria-pressed="true"] .ic { color: var(--navy); }
+  [data-theme="dark"] .dept-tab[aria-pressed="true"] .ic { color: var(--amber-2); }
+
+  /* Banner */
+  .banner {
+    background: linear-gradient(180deg, rgba(210,83,58,0.10), rgba(210,83,58,0.05));
+    border: 1px solid rgba(210,83,58,0.22);
+    color: var(--red);
+    border-radius: var(--r-md);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 14px; font-weight: 500;
+    margin-bottom: 18px;
+  }
+  .banner b { color: var(--red); font-weight: 700; margin-right: 6px; }
+  .banner .icwrap {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(210,83,58,0.16);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--red);
+    flex-shrink: 0;
+  }
+  .banner span.muted { color: var(--ink-2); font-weight: 500; }
+  .banner button {
+    margin-left: auto; appearance: none; border: 1px solid rgba(210,83,58,0.3);
+    background: transparent; color: var(--red);
+    font: inherit; font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  }
+  .banner button:hover { background: rgba(210,83,58,0.1); }
+
+  /* Stats grid */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    padding: 16px 18px 14px;
+    box-shadow: var(--shadow-card);
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card .stripe {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--navy);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+  .stat-card.amber .stripe { background: var(--amber); }
+  .stat-card.red .stripe { background: var(--red); }
+  .stat-card.green .stripe { background: var(--green); }
+  .stat-card.yellow .stripe { background: var(--yellow); }
+  .stat-card .head {
+    display: flex; align-items: center; gap: 10px; margin-top: 4px;
+  }
+  .stat-card .icwrap {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: var(--surface-3);
+    color: var(--ink-2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .stat-card.amber .icwrap { background: var(--amber-soft); color: var(--amber); }
+  .stat-card.red .icwrap { background: var(--red-soft); color: var(--red); }
+  .stat-card.green .icwrap { background: var(--green-soft); color: var(--green); }
+  .stat-card.yellow .icwrap { background: var(--yellow-soft); color: var(--yellow); }
+  .stat-card .lbl {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+  .stat-card .val {
+    font-size: 36px; font-weight: 600; letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .stat-card.amber .val { color: var(--amber); }
+  .stat-card.red .val { color: var(--red); }
+  .stat-card .meta {
+    font-size: 12px; color: var(--ink-3); font-weight: 500;
+    margin-top: 2px;
+  }
+  .stat-card .meta.warn { color: var(--red); font-weight: 600; }
+
+  /* Section card */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .section-head {
+    padding: 16px 20px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .section-head h2 {
+    margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.015em;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .section-head h2 .ic { width: 16px; height: 16px; color: var(--ink-3); }
+  .section-head .meta {
+    font-size: 12px; color: var(--ink-3); font-weight: 500;
+  }
+
+  .section.alert .section-head {
+    background: var(--red-soft);
+    border-bottom-color: rgba(210,83,58,0.18);
+  }
+  .section.alert .section-head h2 { color: var(--red); }
+  .section.alert .section-head h2 .ic { color: var(--red); }
+
+  .section-body { padding: 14px 18px 18px; }
+
+  /* Order rows / list rows */
+  .row-list { display: flex; flex-direction: column; gap: 8px; }
+  .row-card {
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 14px;
+    transition: background 160ms ease;
+  }
+  .row-card:hover { background: var(--surface); }
+  .row-card .lblock { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+  .row-card .ord-no {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+    color: var(--red); background: var(--red-soft);
+    padding: 4px 8px; border-radius: 6px;
+    text-transform: uppercase;
+  }
+  .row-card.warn .ord-no { color: var(--yellow); background: var(--yellow-soft); }
+  .row-card .desc {
+    display: flex; flex-direction: column; min-width: 0;
+  }
+  .row-card .desc .t {
+    font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .row-card .desc .s {
+    font-size: 12px; color: var(--ink-2); margin-top: 2px;
+  }
+  .row-card .qty {
+    font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums;
+    background: var(--surface);
+    padding: 3px 8px; border-radius: 6px;
+    border: 1px solid var(--hairline);
+  }
+  .row-card .cr {
+    font-size: 11px; font-weight: 700;
+    background: rgba(210,83,58,0.15); color: var(--red);
+    padding: 3px 8px; border-radius: 6px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .row-card .smbtn {
+    appearance: none; border: 1px solid var(--hairline-2);
+    background: var(--surface);
+    color: var(--ink); font: inherit; font-size: 12px; font-weight: 600;
+    padding: 7px 12px; border-radius: 9px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .row-card .smbtn:hover { background: var(--navy); color: white; border-color: var(--navy); }
+  .row-card .smbtn .ic { width: 13px; height: 13px; }
+
+  /* Machine load */
+  .ml-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 14px 20px 8px;
+  }
+  .ml-head h2 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: -0.015em; }
+  .ml-head .meta { font-size: 12px; color: var(--ink-3); font-weight: 500; }
+
+  .week-strip {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+    background: var(--surface-2);
+  }
+  .day {
+    padding: 10px 14px;
+    text-align: center;
+    border-right: 1px solid var(--hairline);
+    font-size: 12px; font-weight: 500;
+    color: var(--ink-3);
+    position: relative;
+  }
+  .day:last-child { border-right: 0; }
+  .day.today { background: var(--amber-soft); color: var(--amber); }
+  .day.today::after {
+    content: ""; position: absolute; bottom: -1px; left: 12px; right: 12px; height: 2px;
+    background: var(--amber); border-radius: 2px;
+  }
+  .day b { display: block; font-size: 13px; color: var(--ink); font-weight: 600; letter-spacing: -0.01em; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.05em;}
+  .day.today b { color: var(--amber); }
+
+  .machines-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    padding: 16px 18px 20px;
+  }
+  .mach-card {
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    padding: 12px 14px 14px;
+    display: flex; flex-direction: column; gap: 10px;
+    position: relative; overflow: hidden;
+    transition: transform 100ms ease, box-shadow 200ms ease;
+  }
+  .mach-card:hover { box-shadow: var(--shadow-pop); }
+  .mach-card .accent {
+    position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+    background: var(--ink-3);
+  }
+  .mach-card.steel    .accent { background: #b76b3a; }
+  .mach-card.cutoff   .accent { background: #d2533a; }
+  .mach-card.swage    .accent { background: var(--amber); }
+  .mach-card.e40      .accent { background: #4f8ad6; }
+  .mach-card.e32      .accent { background: #9460c8; }
+  .mach-card.endcl    .accent { background: #2fa07a; }
+  .mach-card.weldr    .accent { background: #c84e75; }
+  .mach-card.welda    .accent { background: var(--yellow); }
+  .mach-card.weldd    .accent { background: #4f8ad6; }
+  .mach-card .top {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 6px;
+  }
+  .mach-card .name {
+    font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .mach-card .name small {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    color: var(--navy); background: var(--navy-soft);
+    padding: 2px 6px; border-radius: 5px;
+    margin-left: 6px; vertical-align: middle; letter-spacing: 0.05em;
+  }
+  [data-theme="dark"] .mach-card .name small { color: var(--amber-2); background: var(--amber-soft);}
+  .mach-card .status {
+    font-size: 11px; color: var(--ink-3); font-weight: 500;
+    display: inline-flex; align-items: center; gap: 5px;
+    flex-shrink: 0;
+  }
+  .mach-card .status .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3);
+  }
+  .mach-card .status.idle .dot { background: var(--ink-3); }
+  .mach-card .status.running .dot { background: var(--green); }
+  .mach-card .status.full .dot { background: var(--amber); }
+  .mach-card .status.cap { color: var(--green); }
+  .mach-card .status.cap .dot { background: var(--green); }
+
+  .mach-card .num-row {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 8px;
+  }
+  .mach-card .jobs-num {
+    font-size: 28px; font-weight: 600; letter-spacing: -0.03em; line-height: 1;
+  }
+  .mach-card .jobs-lbl { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-top: 2px; }
+  .mach-card .free {
+    text-align: right;
+    font-size: 12px; font-weight: 600; color: var(--amber);
+  }
+  .mach-card .free .min { font-size: 14px; }
+  .mach-card .free .lbl { display: block; font-size: 10px; font-weight: 500; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
+
+  .mach-card .progress {
+    height: 6px; border-radius: 4px;
+    background: var(--surface-3);
+    overflow: hidden; position: relative;
+  }
+  .mach-card .progress > i {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: var(--navy); border-radius: 4px;
+    display: block;
+  }
+  .mach-card.full .progress > i { background: var(--amber); }
+  .mach-card .progress-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--ink-3); font-weight: 500;
+    margin-top: -4px;
+  }
+  .mach-card .progress-row .used { color: var(--ink-2); }
+  .mach-card .progress-row .free-pct { color: var(--ink-3); }
+
+  .mach-card .schedule {
+    font-size: 11px; color: var(--ink-3); font-style: normal;
+    padding-top: 8px;
+    border-top: 1px solid var(--hairline);
+  }
+  .mach-card .schedule b { color: var(--ink-2); font-weight: 600; }
+
+  /* Tables (Active / Completed orders) */
+  .tbl-wrap { padding: 4px 0 0; }
+  .tbl {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  .tbl thead th {
+    text-align: left;
+    padding: 12px 16px 10px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--hairline);
+    border-top: 1px solid var(--hairline);
+    white-space: nowrap;
+  }
+  .tbl thead th:first-child { padding-left: 20px; }
+  .tbl thead th:last-child { padding-right: 20px; text-align: right; }
+  .tbl tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--ink); font-weight: 500;
+    vertical-align: middle;
+  }
+  .tbl tbody tr:last-child td { border-bottom: 0; }
+  .tbl tbody td:first-child { padding-left: 20px; }
+  .tbl tbody td:last-child { padding-right: 20px; text-align: right; }
+  .tbl tbody tr:hover td { background: var(--surface-2); }
+  .tbl tbody tr.overdue { background: rgba(210,83,58,0.04); }
+  .tbl tbody tr.overdue:hover td { background: rgba(210,83,58,0.07); }
+
+  /* Priority pill */
+  .pri {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 999px;
+    background: var(--amber-soft); color: var(--amber);
+    font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .pri.p8 { background: var(--green-soft); color: var(--green); }
+  .pri.p9 { background: var(--ink); color: white; opacity: 0.92; }
+
+  .ord-id {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700; color: var(--amber);
+    letter-spacing: 0.02em;
+  }
+  .qty-num {
+    font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .cr-num {
+    font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+  }
+  .cr-num.danger { color: var(--red); }
+
+  .wkday {
+    font-size: 12px; color: var(--ink-2); font-weight: 500;
+    line-height: 1.2; white-space: nowrap;
+  }
+  .wkday small {
+    display: block; color: var(--ink-3); font-weight: 500; margin-top: 1px;
+  }
+
+  /* Step pill (Tube Laser, Cutt off, Paint, etc.) */
+  .step-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 9px; border-radius: 7px;
+    background: var(--navy-soft); color: var(--navy);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  [data-theme="dark"] .step-pill { color: var(--amber-2); }
+  .step-pill.cutoff { background: rgba(210,83,58,0.12); color: var(--red); }
+  .step-pill.paint  { background: rgba(76,175,106,0.14); color: var(--green); }
+  .step-pill .ic { width: 11px; height: 11px; }
+  .step-sub { font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+
+  .progress-mini {
+    width: 110px; height: 5px;
+    background: var(--surface-3); border-radius: 4px; overflow: hidden;
+    display: inline-block; vertical-align: middle;
+  }
+  .progress-mini > i {
+    display: block; height: 100%;
+    background: var(--amber); border-radius: 4px;
+  }
+  .progress-mini.zero > i { background: var(--hairline-2); }
+  .progress-pct {
+    display: inline-block; vertical-align: middle;
+    margin-left: 8px; font-size: 12px;
+    color: var(--ink-2); font-weight: 600; font-variant-numeric: tabular-nums;
+    min-width: 32px; text-align: right;
+  }
+  .progress-pct.zero { color: var(--ink-3); font-weight: 500; }
+
+  /* Section sub-tabs (This Week / Wk 18 / Wk 17) */
+  .subtabs {
+    display: flex; gap: 6px; padding: 8px 18px 12px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .subtab {
+    appearance: none; border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-2); font: inherit; font-size: 12px; font-weight: 500;
+    padding: 6px 12px; border-radius: 999px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .subtab .count {
+    background: var(--hairline);
+    color: var(--ink-2); font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: 999px;
+    min-width: 18px; text-align: center;
+  }
+  .subtab[aria-pressed="true"] {
+    background: var(--ink); color: white;
+    font-weight: 600;
+  }
+  .subtab[aria-pressed="true"] .count { background: rgba(255,255,255,0.18); color: white; }
+
+  .clear-all {
+    appearance: none; border: 1px solid rgba(210,83,58,0.25);
+    background: rgba(210,83,58,0.06);
+    color: var(--red); font: inherit; font-size: 12px; font-weight: 600;
+    padding: 7px 13px; border-radius: 9px; cursor: pointer;
+  }
+  .clear-all:hover { background: rgba(210,83,58,0.12); }
+
+  .undo-btn {
+    appearance: none; border: 1px solid rgba(210,83,58,0.25);
+    background: rgba(210,83,58,0.04);
+    color: var(--red); font: inherit; font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: 8px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .undo-btn:hover { background: rgba(210,83,58,0.10); }
+  .undo-btn .ic { width: 12px; height: 12px; }
+
+  .edit-btn {
+    appearance: none; border: 1px solid var(--hairline-2);
+    background: var(--surface);
+    color: var(--ink); font: inherit; font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: 8px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .edit-btn:hover { background: var(--navy); color: white; border-color: var(--navy); }
+  .edit-btn .ic { width: 12px; height: 12px; }
+
+  .customer-name {
+    color: var(--ink-2); font-weight: 500;
+  }
+
+  /* Util */
+  .ic { display: inline-block; vertical-align: middle; }
+
+  /* Light/dark toggle in foot */
+  .toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--ink-2); font-weight: 500;
+    padding: 6px 4px;
+  }
+  .toggle .switch {
+    width: 32px; height: 18px; border-radius: 999px;
+    background: var(--hairline-2);
+    position: relative; cursor: pointer;
+    transition: background 200ms ease;
+  }
+  .toggle .switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    transition: transform 200ms ease;
+  }
+  .toggle.on .switch { background: var(--navy); }
+  .toggle.on .switch::after { transform: translateX(14px); }
+
+  @media (max-width: 1280px) {
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .stat-card:nth-child(4), .stat-card:nth-child(5) { grid-column: span 1; }
+  }
+  @media (max-width: 980px) {
+    .app { grid-template-columns: 1fr; }
+    .side { position: relative; height: auto; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<div id="root"></div>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect } = React;
+
+/* ─── Icons (Lucide-style) ─── */
+const I = ({ n, s = 16, w = 1.8 }) => {
+  const p = { width: s, height: s, viewBox: "0 0 24 24", fill:"none", stroke:"currentColor",
+    strokeWidth: w, strokeLinecap:"round", strokeLinejoin:"round", className:"ic" };
+  switch (n) {
+    case 'hammer': return <svg {...p}><path d="M15 12 9.5 17.5a2.121 2.121 0 0 1-3-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/></svg>;
+    case 'saw': return <svg {...p}><path d="M3 6 L7 10 L4 13 L8 17 L5 20"/><path d="M10 4 14 8 11 11 15 15 12 18 16 22"/><path d="M18 4 21 7 18.5 9.5 21 12"/></svg>;
+    case 'thread': return <svg {...p}><path d="M5.5 4.5 L5.5 14 a3 3 0 0 0 6 0 L11.5 7 a2 2 0 0 1 4 0 L15.5 16 a4 4 0 0 1-8 0"/><circle cx="5.5" cy="4.5" r="1.2"/></svg>;
+    case 'truck': return <svg {...p}><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>;
+    case 'layers': return <svg {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.65 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>;
+    case 'grid': return <svg {...p}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
+    case 'list': return <svg {...p}><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>;
+    case 'cal': return <svg {...p}><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>;
+    case 'wave': return <svg {...p}><path d="M2 12h2a2 2 0 0 1 2 2v2"/><path d="M22 12h-2a2 2 0 0 0-2-2v-2"/><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 7.76a6 6 0 0 0 0 8.49"/></svg>;
+    case 'check': return <svg {...p}><path d="M20 6 9 17l-5-5"/></svg>;
+    case 'check-sq': return <svg {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>;
+    case 'box': return <svg {...p}><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>;
+    case 'factory': return <svg {...p}><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1M12 18h1M7 18h1"/></svg>;
+    case 'product': return <svg {...p}><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.65 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>;
+    case 'machine': return <svg {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+    case 'users': return <svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+    case 'pkg': return <svg {...p}><path d="M16.5 9.4 7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>;
+    case 'search': return <svg {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>;
+    case 'door': return <svg {...p}><path d="M9 21V3h10v18"/><path d="M5 21h14"/><circle cx="15.5" cy="12" r=".5" fill="currentColor"/></svg>;
+    case 'print': return <svg {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>;
+    case 'clock': return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>;
+    case 'bell': return <svg {...p}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>;
+    case 'alert': return <svg {...p}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+    case 'siren': return <svg {...p}><path d="M7 18v-6a5 5 0 1 1 10 0v6"/><path d="M5 21h14"/><path d="M21 12h1"/><path d="M18.5 4.5 18 5"/><path d="M2 12h1"/><path d="M12 2v1"/><path d="M4.929 4.929l.707.707"/><path d="M12 12v9"/></svg>;
+    case 'down': return <svg {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+    case 'up': return <svg {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+    case 'shield': return <svg {...p}><path d="M12 3 4 6v6c0 4.5 3.2 8.4 8 9 4.8-.6 8-4.5 8-9V6l-8-3Z"/></svg>;
+    case 'logout': return <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+    case 'arrow': return <svg {...p}><path d="M5 12h14M13 5l7 7-7 7"/></svg>;
+    case 'edit': return <svg {...p}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+    case 'dot': return <svg {...p}><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>;
+    case 'chev': return <svg {...p}><path d="m9 18 6-6-6-6"/></svg>;
+    case 'wood-bench': return <svg {...p}><path d="M3 10h18l-1 2H4z"/><path d="M5 12v8M19 12v8M9 12v8M15 12v8"/></svg>;
+    case 'flame': return <svg {...p}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>;
+    default: return null;
+  }
+};
+
+/* ─── Logo Mark (matches login) ─── */
+const Logo = ({ size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64">
+    <defs>
+      <linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#ffffff"/>
+        <stop offset="100%" stopColor="#f6f3ec"/>
+      </linearGradient>
+    </defs>
+    <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#lg2)" stroke="rgba(26,29,36,0.10)"/>
+    <circle cx="44" cy="22" r="5" fill="var(--amber)"/>
+    <path d="M6 46 L20 28 L28 38 L40 22 L52 46 Z" fill="var(--navy)"/>
+    <rect x="6" y="46" width="46" height="2" rx="1" fill="var(--navy)" opacity="0.25"/>
+  </svg>
+);
+
+/* ─── Sidebar ─── */
+function Sidebar({ active, onNav }) {
+  const items = [
+    { group: 'Production', items: [
+      { id:'dash',   label:'Dashboard', icon:'grid' },
+      { id:'pri',    label:'Priority',  icon:'list' },
+      { id:'week',   label:'Week Plan', icon:'cal' },
+      { id:'sched',  label:'Schedule',  icon:'wave' },
+    ]},
+    { group: 'Tracking', items: [
+      { id:'track',  label:'Tracking',  icon:'check-sq' },
+      { id:'disp',   label:'Dispatch',  icon:'truck' },
+    ]},
+    { group: 'Config', items: [
+      { id:'prod',   label:'Products',  icon:'pkg' },
+      { id:'mach',   label:'Machines',  icon:'machine' },
+      { id:'cust',   label:'Customers', icon:'users' },
+    ]},
+  ];
+
+  return (
+    <aside className="side">
+      <div className="brand">
+        <div className="mark"><Logo size={30} /></div>
+        <div className="name">
+          <b><em>elmo's</em> Production</b>
+          <span>Steelworks · Plant 2</span>
+        </div>
+      </div>
+
+      <div className="ctx-card">
+        <div className="role-pill">Boss</div>
+        <div className="row"><I n="factory" s={14} /> <span>Steel Dept</span></div>
+        <div className="row"><I n="users" s={14} /> <span>signed in as <b>S. Eyck</b></span></div>
+      </div>
+
+      {items.map(g => (
+        <div key={g.group} className="nav-group">
+          <div className="nav-title">{g.group}</div>
+          {g.items.map(it => (
+            <div key={it.id}
+                 className="nav-item"
+                 aria-current={active === it.id ? 'page' : undefined}
+                 onClick={() => onNav(it.id)}>
+              <I n={it.icon} s={17} />
+              <span>{it.label}</span>
+              {it.id === 'pri' && <span style={{marginLeft:'auto', background:'var(--amber-soft)', color:'var(--amber)', fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:999}}>2</span>}
+            </div>
+          ))}
+        </div>
+      ))}
+
+      <div className="side-foot">
+        <div className="util-row">
+          <button className="util-btn"><I n="down" s={13}/> Export</button>
+          <button className="util-btn"><I n="shield" s={13}/> Backups</button>
+          <button className="util-btn"><I n="up" s={13}/> Import</button>
+        </div>
+        <button className="signout"><I n="logout" s={14}/> Logout</button>
+        <div className="meta-foot">
+          <div className="sync"><span className="dot"/> Synced 14:53</div>
+          <div>05 May 2026 · Tuesday</div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+/* ─── Stat Card ─── */
+function Stat({ icon, lbl, val, meta, metaWarn, accent }) {
+  return (
+    <div className={`stat-card ${accent || ''}`}>
+      <div className="stripe"/>
+      <div className="head">
+        <div className="icwrap"><I n={icon} s={16}/></div>
+        <div className="lbl">{lbl}</div>
+      </div>
+      <div className="val">{val}</div>
+      <div className={`meta ${metaWarn ? 'warn' : ''}`}>
+        {metaWarn && <I n="alert" s={11}/>} {meta}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Machine card ─── */
+function Mach({ name, badge, kind, jobs, mins, free, used, hasCap, schedule, status }) {
+  const fullish = used >= 80;
+  return (
+    <div className={`mach-card ${kind || ''} ${fullish ? 'full' : ''}`}>
+      <div className="accent"/>
+      <div className="top">
+        <div className="name">{name}{badge && <small>{badge}</small>}</div>
+        <div className={`status ${hasCap ? 'cap' : (jobs > 0 ? 'running' : 'idle')}`}>
+          <span className="dot"/> {hasCap ? <>✓ Has capacity</> : (jobs > 0 ? 'Running' : 'Idle')}
+        </div>
+      </div>
+      <div className="num-row">
+        <div>
+          <div className="jobs-num">{jobs}</div>
+          <div className="jobs-lbl">{jobs === 1 ? 'job' : 'jobs'} · {mins}min</div>
+        </div>
+        <div className="free">
+          <span className="min">{free}min</span>
+          <span className="lbl">free</span>
+        </div>
+      </div>
+      <div className="progress"><i style={{ width: `${Math.min(used, 100)}%` }}/></div>
+      <div className="progress-row">
+        <span className="used">{used}% used</span>
+        <span className="free-pct">{100 - used}% free</span>
+      </div>
+      <div className="schedule">{schedule}</div>
+    </div>
+  );
+}
+
+/* ─── App ─── */
+function App() {
+  const [active, setActive] = useState('dash');
+  const [dept, setDept] = useState('steel');
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    document.body.dataset.theme = dark ? 'dark' : 'light';
+  }, [dark]);
+
+  const machines = [
+    { name:'Cutt off',     kind:'cutoff', jobs:0, mins:0,   free:515, used:0,  schedule:'No work scheduled', status:'idle' },
+    { name:'Tube Laser',   badge:'BN', kind:'steel', jobs:6, mins:205, free:310, used:40, schedule:'Lead: 12:30 · 045 KFC', hasCap:true },
+    { name:'Swage',        kind:'swage', jobs:0, mins:0,   free:515, used:0,  schedule:'No work scheduled' },
+    { name:'E40',          kind:'e40', jobs:0,   mins:0,   free:515, used:0,  schedule:'No work scheduled' },
+    { name:'E32',          kind:'e32', jobs:3,   mins:69,  free:446, used:13, schedule:'045 KFC Coffee tafel (60p)…', hasCap:true },
+    { name:'End Closing',  kind:'endcl', jobs:0, mins:0,   free:515, used:0,  schedule:'No work scheduled' },
+    { name:'Weld (Robot)', kind:'weldr', jobs:0, mins:0,   free:515, used:0,  schedule:'No work scheduled', hasCap:true },
+    { name:'Weld (Arrie)', kind:'welda', jobs:2, mins:237, free:278, used:46, schedule:'12:00 — Boxx Top Frame…', hasCap:true },
+    { name:'Weld (Dino)',  kind:'weldd', jobs:4, mins:289, free:226, used:56, schedule:'13:15 — Booth bench…', hasCap:true },
+  ];
+
+  return (
+    <div className="app">
+      <Sidebar active={active} onNav={setActive} />
+
+      <main className="main">
+        {/* Top bar */}
+        <div className="topbar">
+          <div>
+            <h1>Dashboard</h1>
+            <div className="sub">Production overview &amp; machine load</div>
+          </div>
+          <div className="topbar-actions">
+            <button className="ibtn"><I n="search" s={15}/> Find Order</button>
+            <button className="ibtn"><I n="clock" s={15}/> End of Day</button>
+            <button className="ibtn"><I n="print" s={15}/> Print</button>
+            <div className="toggle" style={{marginLeft:8}} onClick={() => setDark(d => !d)}>
+              <span>{dark ? 'Dark' : 'Light'} mode</span>
+              <span className={`switch ${dark ? '' : 'on'}`}/>
+            </div>
+          </div>
+        </div>
+
+        {/* Department tabs */}
+        <div className="dept-tabs">
+          <button className="dept-tab" aria-pressed={dept==='all'}      onClick={() => setDept('all')}>      <I n="grid" s={14}/> All Depts</button>
+          <button className="dept-tab" aria-pressed={dept==='steel'}    onClick={() => setDept('steel')}>    <I n="hammer" s={14}/> Steel</button>
+          <button className="dept-tab" aria-pressed={dept==='wood'}     onClick={() => setDept('wood')}>     <I n="saw" s={14}/> Wood</button>
+          <button className="dept-tab" aria-pressed={dept==='uphol'}    onClick={() => setDept('uphol')}>    <I n="thread" s={14}/> Upholstery</button>
+          <button className="dept-tab" aria-pressed={dept==='disp'}     onClick={() => setDept('disp')}>     <I n="truck" s={14}/> Dispatching</button>
+          <button className="dept-tab" style={{marginLeft:'auto'}}><I n="shield" s={14}/> Passwords</button>
+        </div>
+
+        {/* Overdue banner */}
+        <div className="banner">
+          <div className="icwrap"><I n="siren" s={15}/></div>
+          <div><b>036</b><span className="muted">— overdue, was planned Week 18 / Day 3.</span></div>
+          <button>View order</button>
+        </div>
+
+        {/* Stat row */}
+        <div className="stats">
+          <Stat icon="list"     lbl="Active Orders"    val="11" meta="1 overdue" metaWarn accent="" />
+          <Stat icon="factory"  lbl="Machines Active"  val="1"  meta="of 15 · tap to view" />
+          <Stat icon="layers"   lbl="Machines Idle"    val="14" meta="not started today · tap to view" accent="amber" />
+          <Stat icon="box"      lbl="Parts in Production" val="32" meta="across all active orders" />
+          <Stat icon="check"    lbl="Completed Today"  val="0"  meta="21 total completed" accent="green" />
+        </div>
+
+        {/* Needs Attention */}
+        <div className="section alert">
+          <div className="section-head">
+            <h2><I n="clock" s={16}/> 1 Overdue Order</h2>
+            <div className="meta">last updated 14:53</div>
+          </div>
+          <div className="section-body">
+            <div className="row-list">
+              <div className="row-card">
+                <div className="lblock">
+                  <span className="ord-no">036</span>
+                  <div className="desc">
+                    <div className="t">Booth bench 1600 Sgl <span style={{color:'var(--ink-3)', fontWeight:500}}>×9</span></div>
+                    <div className="s">Was planned Wk18 / Day 3</div>
+                  </div>
+                </div>
+                <button className="smbtn">Reschedule <I n="arrow" s={12}/></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="section">
+          <div className="section-head">
+            <h2><I n="bell" s={16}/> Needs Attention</h2>
+            <div className="meta">2 items</div>
+          </div>
+          <div className="section-body">
+            <div className="row-list">
+              <div className="row-card">
+                <div className="lblock">
+                  <span className="ord-no">Overdue · 036</span>
+                  <div className="desc">
+                    <div className="t">Booth bench 1600 Sgl × 9</div>
+                    <div className="s">was planned Wk18 / Day 3</div>
+                  </div>
+                </div>
+                <button className="smbtn">Reschedule</button>
+              </div>
+              <div className="row-card warn">
+                <div className="lblock">
+                  <span className="ord-no" style={{color:'var(--yellow)', background:'var(--yellow-soft)'}}>At Risk · 11558</span>
+                  <span className="cr" style={{color:'var(--yellow)', background:'var(--yellow-soft)'}}>CR 1.00</span>
+                  <div className="desc">
+                    <div className="t">Boxx Top Frame × 150</div>
+                    <div className="s">dispatch date is at risk · CR 1.00</div>
+                  </div>
+                </div>
+                <button className="smbtn"><I n="edit" s={12}/> Edit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Machine load */}
+        <div className="section">
+          <div className="ml-head">
+            <h2>Machine Load — Today</h2>
+            <div className="meta">515min effective · Wk 19 / Tue</div>
+          </div>
+          <div className="week-strip">
+            <div className="day"><b>Mon</b>17:15</div>
+            <div className="day today"><b>Tue</b>17:15</div>
+            <div className="day"><b>Wed</b>17:15</div>
+            <div className="day"><b>Thu</b>17:15</div>
+            <div className="day"><b>Fri</b>13:30</div>
+          </div>
+          <div className="machines-grid">
+            {machines.map((m, i) => <Mach key={i} {...m} />)}
+          </div>
+        </div>
+
+        {/* Active Orders */}
+        <div className="section">
+          <div className="section-head">
+            <h2><I n="list" s={16}/> Active Orders</h2>
+            <div className="meta">11 orders · 221 total parts</div>
+          </div>
+          <div className="tbl-wrap">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th style={{width: 50}}>Pri</th>
+                  <th style={{width: 90}}>Order</th>
+                  <th>Product</th>
+                  <th>Customer</th>
+                  <th>Wk/Day</th>
+                  <th style={{width: 70}}>Qty</th>
+                  <th style={{width: 60}}>CR</th>
+                  <th>Current Step</th>
+                  <th style={{width: 200}}>Progress</th>
+                  <th style={{width: 100}}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { pri:5, ord:'036', prod:'Booth bench 1600 Sgl', cust:'RG', wk:'Wk18/D3', wkTo:'Wk20', qty:9, cr:'8.0', step:'Paint', stepKind:'paint', stepSub:'Booth bench Single 1600 Assembly', prog:90, overdue:true },
+                  { pri:5, ord:'045', prod:'KFC Coffee tafel', cust:'RG', wk:'Wk19/D2', wkTo:'Wk20', qty:20, cr:'4.0', step:'Tube Laser', stepKind:'', stepSub:'Coffee Table Pote', prog:0 },
+                  { pri:5, ord:'053', prod:'KFC 320Table base', cust:'KFC South Africa', wk:'Wk19/D2', wkTo:'Wk21', qty:6, cr:'9.0', step:'Tube Laser', stepKind:'', stepSub:'320 table base poot', prog:0 },
+                  { pri:5, ord:'041', prod:'KFC Window Counter', cust:'MDP', wk:'Wk19/D3', wkTo:'Wk20', qty:1, cr:'8.0', step:'Tube Laser', stepKind:'', stepSub:'Window counter sye', prog:0 },
+                  { pri:5, ord:'056', prod:'RCP Bench 1300 swage', cust:'KFC South Africa', wk:'Wk19/D3', wkTo:'Wk20', qty:1, cr:'6.0', step:'Tube Laser', stepKind:'', stepSub:'Bench Swage 1300 Side', prog:0 },
+                  { pri:5, ord:'11558', prod:'Boxx Top Frame', cust:'Table tops', wk:'Wk19/D4', wkTo:'Wk19', qty:150, cr:'1.0', crDanger:true, step:'Cutt off', stepKind:'cutoff', stepSub:'Boxx Bo raam', prog:0 },
+                  { pri:5, ord:'1122', prod:'KFC Window Counter 2200', cust:'KFC South Africa', wk:'Wk19/D4', wkTo:'Wk20', qty:1, cr:'7.0', step:'Tube Laser', stepKind:'', stepSub:'WC 2200 Sye', prog:0 },
+                  { pri:8, ord:'052', prod:'Booth bench 1600 Sgl', cust:'KFC South Africa', wk:'Wk19/D2', wkTo:'Wk20', qty:14, cr:'7.0', step:'Tube Laser', stepKind:'', stepSub:'Booth bench single sides', prog:0 },
+                  { pri:9, ord:'054', prod:'KFC Booth bench 110 Sgl', cust:'KFC South Africa', wk:'Wk19/D2', wkTo:'Wk20', qty:10, cr:'7.0', step:'Tube Laser', stepKind:'', stepSub:'KFC Booth bnc 1100 sgl side', prog:0 },
+                  { pri:9, ord:'051', prod:'KFC Corner Bench 900', cust:'KFC South Africa', wk:'Wk19/D3', wkTo:'Wk21', qty:4, cr:'9.0', step:'Tube Laser', stepKind:'', stepSub:'KFC Corner bnc sides', prog:0 },
+                  { pri:9, ord:'055', prod:'KFC Booth Bench 1600 Dbl', cust:'KFC South Africa', wk:'Wk19/D3', wkTo:'Wk20', qty:5, cr:'8.0', step:'Tube Laser', stepKind:'', stepSub:'KFC Booth bnc 1600 dbl side', prog:0 },
+                ].map((r, i) => (
+                  <tr key={i} className={r.overdue ? 'overdue' : ''}>
+                    <td><span className={`pri ${r.pri >= 9 ? 'p9' : r.pri >= 8 ? 'p8' : ''}`}>{r.pri}</span></td>
+                    <td><span className="ord-id">{r.ord}</span></td>
+                    <td>{r.prod}</td>
+                    <td className="customer-name">{r.cust}</td>
+                    <td className="wkday">{r.wk}<small>→ {r.wkTo}</small></td>
+                    <td><span className="qty-num">{r.qty}</span></td>
+                    <td><span className={`cr-num ${r.crDanger ? 'danger' : ''}`}>{r.cr}</span></td>
+                    <td>
+                      <div className={`step-pill ${r.stepKind}`}>
+                        <I n="dot" s={11}/> {r.step}
+                      </div>
+                      <div className="step-sub">{r.stepSub}</div>
+                    </td>
+                    <td>
+                      <div className={`progress-mini ${r.prog === 0 ? 'zero' : ''}`}>
+                        <i style={{width: `${r.prog}%`}}/>
+                      </div>
+                      <span className={`progress-pct ${r.prog === 0 ? 'zero' : ''}`}>{r.prog}%</span>
+                    </td>
+                    <td><button className="edit-btn"><I n="edit" s={11}/> Edit</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Completed Orders */}
+        <div className="section">
+          <div className="section-head">
+            <h2><I n="check" s={16}/> Completed Orders</h2>
+            <div style={{display:'flex', gap:14, alignItems:'center'}}>
+              <span className="meta">21 total · 8 this week</span>
+              <button className="clear-all">Clear All</button>
+            </div>
+          </div>
+          <div className="subtabs">
+            <button className="subtab" aria-pressed="true">This Week <span className="count">8</span></button>
+            <button className="subtab">Wk 18 <span className="count">3</span></button>
+            <button className="subtab">Wk 17 <span className="count">10</span></button>
+          </div>
+          <div className="tbl-wrap">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th style={{width: 90}}>Order</th>
+                  <th>Product</th>
+                  <th>Customer</th>
+                  <th style={{width: 80}}>Qty</th>
+                  <th style={{width: 130}}>Completed</th>
+                  <th style={{width: 100}}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { ord:'1221', prod:'KFC 320Table base', cust:'KFC South Africa', qty:6, done:'2026-05-04' },
+                  { ord:'043', prod:'KFC Bowtie Diner', cust:'SF', qty:20, done:'2026-05-04' },
+                  { ord:'040', prod:'KFC-Tbl1779076MOT', cust:'RG', qty:1, done:'—' },
+                  { ord:'039', prod:'KFC-TBase3275h4', cust:'RG', qty:2, done:'—' },
+                  { ord:'038', prod:'220 Table base', cust:'RG', qty:10, done:'2026-05-04' },
+                  { ord:'035', prod:'KFC-Bnc160MOT', cust:'RG', qty:1, done:'—' },
+                  { ord:'034', prod:'KFC Booth Bench 1600 Dbl', cust:'RG', qty:2, done:'2026-05-04' },
+                  { ord:'032', prod:'KFC Booth bench 110 Sgl', cust:'SF', qty:4, done:'2026-05-04' },
+                ].map((r, i) => (
+                  <tr key={i}>
+                    <td><span className="ord-id" style={{color:'var(--ink-2)'}}>{r.ord}</span></td>
+                    <td>{r.prod}</td>
+                    <td className="customer-name">{r.cust}</td>
+                    <td><span className="qty-num">{r.qty}</span></td>
+                    <td style={{color:'var(--ink-2)', fontVariantNumeric:'tabular-nums', fontSize:12}}>{r.done}</td>
+                    <td><button className="undo-btn"><I n="logout" s={11}/> Undo</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -File | Where-Object { $_.Name -match '\\\\.\\(html|css|jsx|js\\)$' } | Select-Object Name)",
+      "PowerShell($cwd = Get-Location; Write-Output \"CWD: $cwd\"; Get-ChildItem -Force | Format-Table Name, Mode -AutoSize)",
+      "PowerShell(npm run build)",
+      "PowerShell(npm run build 2>&1)"
+    ]
+  }
+}

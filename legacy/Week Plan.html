@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>elmo's Production — Week Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f2ee; --bg-2: #ece8e0;
+    --surface: #ffffff; --surface-2: #fbf9f5; --surface-3: #f1eee7;
+    --ink: #1a1d24; --ink-2: #4a4e5a; --ink-3: #8a8e99;
+    --hairline: rgba(26,29,36,0.08); --hairline-2: rgba(26,29,36,0.12);
+    --navy: #1f2a44; --navy-soft: rgba(31,42,68,0.08);
+    --amber: #e89a3c; --amber-2: #f0ae5c; --amber-soft: rgba(232,154,60,0.14);
+    --red: #d2533a; --red-soft: rgba(210,83,58,0.10);
+    --green: #4caf6a; --green-soft: rgba(76,175,106,0.12);
+    --teal: #3a9aaf; --teal-soft: rgba(58,154,175,0.12);
+    --purple: #8b5fbf; --purple-soft: rgba(139,95,191,0.12);
+    --blue: #4677c8; --blue-soft: rgba(70,119,200,0.12);
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.04), 0 8px 20px rgba(26,29,36,0.04);
+    --shadow-pop: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 2px rgba(26,29,36,0.06), 0 12px 28px rgba(26,29,36,0.10);
+    --r-sm: 10px; --r-md: 14px; --r-lg: 20px;
+  }
+  [data-theme="dark"] {
+    --bg: #0e1118; --bg-2: #131722;
+    --surface: #1a1f2c; --surface-2: #20263488; --surface-3: #232938;
+    --ink: #f1f2f5; --ink-2: #b8bcc8; --ink-3: #7c8090;
+    --hairline: rgba(255,255,255,0.07); --hairline-2: rgba(255,255,255,0.12);
+    --navy: #2e3d63; --navy-soft: rgba(88,114,180,0.18);
+    --amber: #f0ae5c; --amber-2: #f5c178; --amber-soft: rgba(240,174,92,0.16);
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 20px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin:0; padding:0; min-height: 100vh;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    color: var(--ink); letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    background: radial-gradient(120% 80% at 50% 0%, var(--surface-2) 0%, var(--bg) 40%, var(--bg-2) 100%);
+  }
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* Sidebar */
+  .side {
+    background: var(--surface); border-right: 1px solid var(--hairline);
+    padding: 16px 12px; display: flex; flex-direction: column; gap: 12px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; padding: 2px 4px 8px; border-bottom: 1px solid var(--hairline); }
+  .brand .mark { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--hairline-2); display: flex; align-items: center; justify-content: center; background: var(--surface-2); flex-shrink: 0; }
+  .brand .name b { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; display: block; line-height: 1.15; }
+  .brand .name b em { font-style: normal; color: var(--amber); }
+  .brand .name span { font-size: 10px; color: var(--ink-3); font-weight: 500; }
+  .ctx-card { background: var(--surface-2); border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .ctx-card .row { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .ctx-card .row b { color: var(--ink); font-weight: 600; }
+  .role-pill { align-self: flex-start; background: var(--navy); color: white; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .nav-group { display: flex; flex-direction: column; gap: 2px; }
+  .nav-title { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: var(--ink-3); text-transform: uppercase; padding: 8px 10px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; font-size: 13px; font-weight: 500; color: var(--ink-2); cursor: pointer; }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item[aria-current="page"] { background: var(--navy-soft); color: var(--navy); font-weight: 600; }
+  [data-theme="dark"] .nav-item[aria-current="page"] { color: var(--amber-2); }
+  .nav-item .ic { width: 16px; height: 16px; flex-shrink: 0; color: var(--ink-3); }
+  .nav-item[aria-current="page"] .ic { color: var(--navy); }
+  [data-theme="dark"] .nav-item[aria-current="page"] .ic { color: var(--amber-2); }
+  .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 7px; padding-top: 10px; border-top: 1px solid var(--hairline); }
+  .util-row { display: flex; gap: 5px; }
+  .util-btn { flex: 1; appearance: none; border: 1px solid var(--hairline-2); background: var(--surface-2); color: var(--ink-2); border-radius: 9px; padding: 7px 8px; font: inherit; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
+  .signout { width: 100%; appearance: none; border: 1px solid rgba(210,83,58,0.25); background: var(--red-soft); color: var(--red); border-radius: 10px; padding: 9px; font: inherit; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; }
+  .meta-foot { font-size: 10px; color: var(--ink-3); display: flex; flex-direction: column; gap: 2px; padding: 4px 4px 0; }
+  .meta-foot .sync { display: flex; align-items: center; gap: 5px; }
+  .meta-foot .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+
+  /* Main */
+  .main { padding: 18px 22px 30px; min-width: 0; }
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+  .topbar h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin: 0; line-height: 1.1; }
+  .topbar .sub { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+  .topbar-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .ibtn { appearance: none; border: 1px solid var(--hairline-2); background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 500; padding: 7px 11px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(26,29,36,0.04); }
+  .ibtn:hover { background: var(--surface-2); }
+  .ibtn .ic { width: 13px; height: 13px; color: var(--ink-2); }
+  .ibtn.primary { background: var(--navy); color: white; border-color: var(--navy); box-shadow: 0 6px 14px rgba(31,42,68,0.22); }
+  .ibtn.primary .ic { color: white; }
+
+  /* Filter bar (dept tabs + month nav + view switch) */
+  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .dept-tabs { display: flex; gap: 4px; padding: 3px; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 10px; }
+  .dept-tab { appearance: none; border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 12px; font-weight: 500; padding: 6px 10px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  .dept-tab .ic { width: 13px; height: 13px; color: var(--ink-3); }
+  .dept-tab[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 4px rgba(26,29,36,0.05); font-weight: 600; }
+  .dept-tab[aria-pressed="true"] .ic { color: var(--navy); }
+
+  .month-nav {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 10px; padding: 3px;
+  }
+  .month-nav button {
+    appearance: none; border: 0; background: transparent;
+    width: 28px; height: 28px; border-radius: 7px;
+    cursor: pointer; color: var(--ink-2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .month-nav button:hover { background: var(--surface-2); color: var(--ink); }
+  .month-nav .today {
+    width: auto; padding: 0 12px; font: inherit; font-size: 12px; font-weight: 600;
+    color: var(--ink);
+  }
+  .view-switch {
+    display: flex; gap: 2px; padding: 3px;
+    background: var(--surface-2); border: 1px solid var(--hairline);
+    border-radius: 10px;
+  }
+  .view-switch button {
+    appearance: none; border: 0; background: transparent;
+    font: inherit; font-size: 11px; font-weight: 600;
+    padding: 5px 10px; border-radius: 7px;
+    cursor: pointer; color: var(--ink-2);
+    display: inline-flex; align-items: center; gap: 4px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .view-switch button[aria-pressed="true"] {
+    background: var(--surface); color: var(--ink);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 4px rgba(26,29,36,0.05);
+  }
+
+  /* Month title block */
+  .month-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+  .month-head h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin: 0; line-height: 1; }
+  .month-head h2 small { font-size: 16px; font-weight: 500; color: var(--ink-3); margin-left: 8px; letter-spacing: -0.02em; }
+  .month-head .legend {
+    display: flex; gap: 14px; align-items: center;
+    font-size: 11px; color: var(--ink-3);
+    background: var(--surface); border: 1px solid var(--hairline);
+    padding: 8px 12px; border-radius: 10px;
+    box-shadow: var(--shadow-card);
+  }
+  .month-head .legend .item { display: flex; align-items: center; gap: 6px; }
+  .month-head .legend .swatch { width: 10px; height: 10px; border-radius: 3px; }
+
+  /* Calendar */
+  .cal-wrap {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .cal-head {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .cal-head .dh {
+    padding: 10px 12px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    color: var(--ink-3); text-transform: uppercase;
+    border-right: 1px solid var(--hairline);
+  }
+  .cal-head .dh:last-child { border-right: 0; }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: minmax(140px, auto);
+  }
+  .cal-cell {
+    border-right: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+    padding: 8px 10px 10px;
+    display: flex; flex-direction: column; gap: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: background 140ms ease;
+    min-width: 0;
+  }
+  .cal-cell:nth-child(5n) { border-right: 0; }
+  .cal-cell:hover { background: var(--surface-2); }
+  .cal-cell.muted { background: var(--surface-2); opacity: 0.55; }
+  .cal-cell.weekend { background: rgba(0,0,0,0.015); }
+  .cal-cell.today {
+    background: var(--amber-soft);
+  }
+  .cal-cell.today::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--amber);
+  }
+  .cal-cell.selected {
+    box-shadow: inset 0 0 0 2px var(--navy);
+    z-index: 1;
+  }
+  .cell-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .cell-head .dnum {
+    font-size: 15px; font-weight: 700; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .cal-cell.today .cell-head .dnum { color: var(--amber); }
+  .cal-cell.muted .cell-head .dnum { color: var(--ink-3); }
+  .cell-head .wknum {
+    font-size: 9px; font-weight: 700; color: var(--ink-3);
+    background: var(--surface-3); padding: 2px 6px; border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+  .cal-cell.today .cell-head .wknum { background: rgba(232,154,60,0.2); color: var(--amber); }
+
+  /* Order chips */
+  .ord-list { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .ord-chip {
+    display: grid; grid-template-columns: 4px 1fr auto;
+    align-items: center; gap: 7px;
+    padding: 4px 7px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    font-size: 11px; font-weight: 500;
+    line-height: 1.2;
+    min-width: 0;
+    box-shadow: 0 1px 2px rgba(26,29,36,0.03);
+  }
+  .ord-chip .bar {
+    align-self: stretch; border-radius: 2px; background: var(--ink-3);
+  }
+  .ord-chip .lbl {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--ink); font-weight: 600;
+  }
+  .ord-chip .qty {
+    color: var(--ink-3); font-weight: 600; font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    background: var(--surface-3); padding: 1px 5px; border-radius: 4px;
+  }
+  .ord-chip.steel  { }
+  .ord-chip.wood   { }
+  .ord-chip.uphol  { }
+  .ord-chip.disp   { }
+  .ord-chip.urgent { }
+  .ord-chip.urgent .lbl { color: var(--red); }
+  .ord-chip.urgent .bar { background: var(--red); }
+
+  .more {
+    font-size: 10px; font-weight: 600; color: var(--ink-3);
+    padding: 2px 7px; cursor: pointer;
+  }
+  .more:hover { color: var(--ink); }
+
+  .cell-foot {
+    display: flex; align-items: center; gap: 6px; justify-content: space-between;
+    margin-top: auto; padding-top: 4px;
+    font-size: 10px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .cell-load {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: var(--surface-3); position: relative; overflow: hidden;
+  }
+  .cell-load i {
+    display: block; height: 100%; border-radius: 2px;
+    background: var(--green);
+  }
+  .cell-load.warn i { background: var(--amber); }
+  .cell-load.full i { background: var(--red); }
+  .cell-foot .pct { font-weight: 700; color: var(--ink-2); font-size: 10px; min-width: 28px; text-align: right; }
+
+  .layout { display: block; }
+  .day-panel {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-card);
+    position: sticky; top: 14px;
+    overflow: hidden;
+    max-height: calc(100vh - 28px);
+    display: flex; flex-direction: column;
+  }
+  .dp-head {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--hairline);
+    background: var(--surface-2);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .dp-head .when {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .dp-head h3 {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+    margin: 0; line-height: 1;
+  }
+  .dp-head .h-meta {
+    display: flex; gap: 10px; font-size: 12px; color: var(--ink-2); font-weight: 500;
+    margin-top: 4px; align-items: center;
+  }
+  .dp-head .h-meta b { color: var(--ink); font-weight: 700; }
+  .dp-head .h-meta .sep { color: var(--hairline-2); }
+
+  .dp-body { padding: 12px 16px 16px; overflow-y: auto; flex: 1; }
+
+  .dp-section + .dp-section { margin-top: 14px; }
+  .dp-section h4 {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    color: var(--ink-3); text-transform: uppercase;
+    margin: 0 0 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dp-section h4 .count {
+    background: var(--surface-3); color: var(--ink-2);
+    font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+
+  .dp-row {
+    display: grid; grid-template-columns: 4px 1fr auto;
+    align-items: center; gap: 10px;
+    padding: 9px 10px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 9px;
+    margin-bottom: 5px;
+    transition: background 120ms ease, border-color 120ms ease;
+  }
+  .dp-row:hover { background: var(--surface-2); border-color: var(--hairline-2); }
+  .dp-row .bar { align-self: stretch; border-radius: 2px; background: var(--accent, var(--amber)); }
+  .dp-row .info { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .dp-row .info .name {
+    font-size: 13px; font-weight: 600; color: var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .dp-row .info .meta {
+    font-size: 11px; color: var(--ink-3); font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .dp-row .info .meta b { color: var(--ink-2); font-weight: 600; }
+  .dp-row .qty {
+    font-size: 14px; font-weight: 700; color: var(--ink);
+    font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  }
+  .dp-row .qty .lbl { font-size: 9px; font-weight: 600; color: var(--ink-3); display: block; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; margin-top: 1px; }
+  .dp-row.steel  { --accent: var(--blue); }
+  .dp-row.wood   { --accent: var(--green); }
+  .dp-row.uphol  { --accent: var(--purple); }
+  .dp-row.disp   { --accent: var(--amber); }
+  .dp-row.urgent { --accent: var(--red); }
+
+  .dp-empty {
+    text-align: center; padding: 22px 12px;
+    color: var(--ink-3); font-size: 12px;
+    background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(0,0,0,0.015) 8px, rgba(0,0,0,0.015) 16px);
+    border-radius: 10px;
+  }
+
+  .dp-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 10px 12px;
+    background: var(--surface-2); border: 1px solid var(--hairline);
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+  .dp-stats .s { display: flex; flex-direction: column; gap: 1px; }
+  .dp-stats .s .v { font-size: 16px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1; }
+  .dp-stats .s .l { font-size: 9px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+  .dp-foot {
+    border-top: 1px solid var(--hairline);
+    padding: 10px 14px;
+    display: flex; gap: 6px;
+    background: var(--surface-2);
+  }
+  .dp-foot button {
+    flex: 1;
+    appearance: none; border: 1px solid var(--hairline-2);
+    background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600;
+    padding: 8px; border-radius: 9px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .dp-foot button.primary {
+    background: var(--navy); color: white; border-color: var(--navy);
+  }
+
+  .ic { display: inline-block; vertical-align: middle; }
+
+  @media (max-width: 1280px) {
+    .layout { grid-template-columns: 1fr 320px; }
+  }
+  @media (max-width: 1100px) {
+    .app { grid-template-columns: 200px 1fr; }
+    .layout { grid-template-columns: 1fr; }
+    .day-panel { position: static; max-height: none; }
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useMemo } = React;
+
+const I = ({ n, s = 16, w = 1.8 }) => {
+  const p = { width: s, height: s, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: w, strokeLinecap: "round", strokeLinejoin: "round", className: "ic" };
+  switch (n) {
+    case 'hammer': return <svg {...p}><path d="M15 12 9.5 17.5a2.121 2.121 0 0 1-3-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/></svg>;
+    case 'saw': return <svg {...p}><path d="M3 6 L7 10 L4 13 L8 17 L5 20"/><path d="M10 4 14 8 11 11 15 15 12 18 16 22"/></svg>;
+    case 'thread': return <svg {...p}><path d="M5.5 4.5 L5.5 14 a3 3 0 0 0 6 0 L11.5 7 a2 2 0 0 1 4 0 L15.5 16 a4 4 0 0 1-8 0"/></svg>;
+    case 'truck': return <svg {...p}><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>;
+    case 'grid': return <svg {...p}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
+    case 'list': return <svg {...p}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>;
+    case 'cal': return <svg {...p}><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>;
+    case 'wave': return <svg {...p}><path d="M2 12h2a2 2 0 0 1 2 2v2"/><path d="M22 12h-2a2 2 0 0 0-2-2v-2"/><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 7.76a6 6 0 0 0 0 8.49"/></svg>;
+    case 'check-sq': return <svg {...p}><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>;
+    case 'pkg': return <svg {...p}><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>;
+    case 'machine': return <svg {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+    case 'users': return <svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>;
+    case 'factory': return <svg {...p}><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>;
+    case 'search': return <svg {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>;
+    case 'clock': return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>;
+    case 'print': return <svg {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>;
+    case 'shield': return <svg {...p}><path d="M12 3 4 6v6c0 4.5 3.2 8.4 8 9 4.8-.6 8-4.5 8-9V6l-8-3Z"/></svg>;
+    case 'logout': return <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+    case 'down': return <svg {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+    case 'up': return <svg {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+    case 'arr-l': return <svg {...p}><path d="M19 12H5M12 19l-7-7 7-7"/></svg>;
+    case 'arr-r': return <svg {...p}><path d="M5 12h14M12 5l7 7-7 7"/></svg>;
+    case 'chev-l': return <svg {...p}><path d="m15 18-6-6 6-6"/></svg>;
+    case 'chev-r': return <svg {...p}><path d="m9 18 6-6-6-6"/></svg>;
+    case 'plus': return <svg {...p}><path d="M12 5v14M5 12h14"/></svg>;
+    case 'key': return <svg {...p}><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/><path d="m15.5 7.5 3 3M19 5l3 3"/></svg>;
+    case 'open': return <svg {...p}><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>;
+    case 'eye': return <svg {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
+    case 'sun': return <svg {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>;
+    case 'moon': return <svg {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>;
+    default: return null;
+  }
+};
+
+const Logo = ({ size = 30 }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64">
+    <defs><linearGradient id="lgw" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ffffff"/><stop offset="100%" stopColor="#f6f3ec"/></linearGradient></defs>
+    <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#lgw)" stroke="rgba(26,29,36,0.10)"/>
+    <circle cx="44" cy="22" r="5" fill="var(--amber)"/>
+    <path d="M6 46 L20 28 L28 38 L40 22 L52 46 Z" fill="var(--navy)"/>
+  </svg>
+);
+
+function Sidebar({ active }) {
+  const items = [
+    { group: 'Production', items: [
+      { id:'dash', label:'Dashboard', icon:'grid' },
+      { id:'pri', label:'Priority', icon:'list' },
+      { id:'week', label:'Week Plan', icon:'cal' },
+      { id:'sched', label:'Schedule', icon:'wave' },
+    ]},
+    { group: 'Tracking', items: [
+      { id:'track', label:'Tracking', icon:'check-sq' },
+      { id:'disp', label:'Dispatch', icon:'truck' },
+    ]},
+    { group: 'Config', items: [
+      { id:'prod', label:'Products', icon:'pkg' },
+      { id:'mach', label:'Machines', icon:'machine' },
+      { id:'cust', label:'Customers', icon:'users' },
+    ]},
+  ];
+  return (
+    <aside className="side">
+      <div className="brand">
+        <div className="mark"><Logo size={28}/></div>
+        <div className="name">
+          <b><em>elmo's</em> Production</b>
+          <span>Steelworks · Plant 2</span>
+        </div>
+      </div>
+      <div className="ctx-card">
+        <div className="role-pill">Boss</div>
+        <div className="row"><I n="factory" s={13}/><span>Steel Dept</span></div>
+        <div className="row"><I n="users" s={13}/><span>signed in as <b>S. Eyck</b></span></div>
+      </div>
+      {items.map(g => (
+        <div key={g.group} className="nav-group">
+          <div className="nav-title">{g.group}</div>
+          {g.items.map(it => (
+            <div key={it.id} className="nav-item" aria-current={active===it.id ? 'page' : undefined}>
+              <I n={it.icon} s={15}/><span>{it.label}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+      <div className="side-foot">
+        <div className="util-row">
+          <button className="util-btn"><I n="down" s={12}/> Export</button>
+          <button className="util-btn"><I n="shield" s={12}/> Backups</button>
+          <button className="util-btn"><I n="up" s={12}/> Import</button>
+        </div>
+        <button className="signout"><I n="logout" s={13}/> Logout</button>
+        <div className="meta-foot">
+          <div className="sync"><span className="dot"/> Synced 11:37</div>
+          <div>07 May 2026 · Thursday</div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+// ---------- Calendar data ----------
+// Map of YYYY-MM-DD -> [{ ord, name, qty, dept, urgent? }]
+const orders = {
+  '2026-05-05': [
+    { ord: '218', name: 'KFC Coffee tafel', qty: 20, dept: 'wood' },
+    { ord: '219', name: 'KFC 320 Table base', qty: 6, dept: 'steel' },
+    { ord: '220', name: 'Booth bench 1600 Sgl', qty: 14, dept: 'wood' },
+    { ord: '221', name: 'KFC Booth bench 110 Sgl', qty: 10, dept: 'wood' },
+  ],
+  '2026-05-06': [
+    { ord: '222', name: 'KFC Window Counter', qty: 1, dept: 'steel' },
+    { ord: '223', name: 'RCP Bench 1300 swage', qty: 1, dept: 'steel' },
+    { ord: '224', name: 'KFC Bowtie Diner', qty: 250, dept: 'steel', urgent: true },
+    { ord: '225', name: 'KFC Corner Bench 900', qty: 4, dept: 'wood' },
+  ],
+  '2026-05-07': [
+    { ord: '226', name: 'Boxx Top Frame', qty: 150, dept: 'steel' },
+    { ord: '227', name: 'KFC Window Counter 2200', qty: 1, dept: 'steel' },
+    { ord: '228', name: 'KFC Booth Bench 1600 Dbl', qty: 5, dept: 'wood' },
+  ],
+  '2026-05-12': [
+    { ord: '230', name: 'RG Coffee Table Pote', qty: 20, dept: 'uphol' },
+    { ord: '231', name: 'KFC SA 320 Table base', qty: 6, dept: 'steel' },
+  ],
+  '2026-05-13': [
+    { ord: '232', name: 'Pin Counter Frame', qty: 8, dept: 'steel' },
+    { ord: '233', name: 'Tan Booth Run', qty: 12, dept: 'uphol' },
+    { ord: '234', name: 'Dispatch — Cape Town', qty: 1, dept: 'disp' },
+  ],
+  '2026-05-19': [
+    { ord: '236', name: 'KFC Bowtie D Ruggie', qty: 250, dept: 'steel', urgent: true },
+    { ord: '237', name: 'KFC Coffee Tafel', qty: 20, dept: 'wood' },
+  ],
+  '2026-05-20': [
+    { ord: '239', name: 'KFC Counter Pickup Joburg', qty: 1, dept: 'disp' },
+    { ord: '240', name: 'Booth Bench Single Sides', qty: 9, dept: 'wood' },
+  ],
+  '2026-05-26': [
+    { ord: '242', name: 'KFC Roodepoort Refit', qty: 1, dept: 'steel' },
+    { ord: '243', name: 'KFC Stool Run', qty: 30, dept: 'wood' },
+    { ord: '244', name: 'Tan Headrest', qty: 24, dept: 'uphol' },
+  ],
+  '2026-05-28': [
+    { ord: '245', name: 'KFC Polokwane Dispatch', qty: 1, dept: 'disp' },
+  ],
+};
+
+// Compute week number (ISO-like)
+function weekNum(year, month, day) {
+  const d = new Date(Date.UTC(year, month, day));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function buildMonthCells(year, month) {
+  // Mon–Fri only (5 columns). Build 5 weeks max for May 2026
+  const first = new Date(year, month, 1);
+  const firstWeekday = (first.getDay() + 6) % 7; // 0 = Mon
+  // Find Monday of the week containing the 1st (could be in previous month)
+  const startDay = 1 - firstWeekday;
+  const cells = [];
+  for (let w = 0; w < 5; w++) {
+    for (let d = 0; d < 5; d++) {
+      const dayNumber = startDay + w * 7 + d;
+      const date = new Date(year, month, dayNumber);
+      cells.push(date);
+    }
+  }
+  return cells;
+}
+
+const fmtKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+function deptName(d) {
+  return d === 'steel' ? 'Steel' : d === 'wood' ? 'Wood' : d === 'uphol' ? 'Upholstery' : 'Dispatch';
+}
+
+function CalendarGrid({ year, month, dept, selectedKey, onSelect, todayKey }) {
+  const cells = buildMonthCells(year, month);
+  const filterFn = (o) => dept === 'all' ? true : o.dept === dept;
+
+  return (
+    <div className="cal-wrap">
+      <div className="cal-head">
+        {['Mon','Tue','Wed','Thu','Fri'].map(d => <div key={d} className="dh">{d}</div>)}
+      </div>
+      <div className="cal-grid">
+        {cells.map((d, i) => {
+          const inMonth = d.getMonth() === month;
+          const key = fmtKey(d);
+          const dayOrders = (orders[key] || []).filter(filterFn);
+          const visible = dayOrders.slice(0, 4);
+          const more = dayOrders.length - visible.length;
+          // simulated capacity load (random-ish but stable)
+          const load = Math.min(100, dayOrders.reduce((s, o) => s + Math.min(60, o.qty * 0.5 + 12), 0));
+          const loadCls = load > 85 ? 'full' : load > 60 ? 'warn' : '';
+          const isToday = key === todayKey;
+          const isSelected = key === selectedKey;
+          return (
+            <div key={i}
+              className={`cal-cell ${!inMonth ? 'muted' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
+              onClick={() => onSelect(key)}>
+              <div className="cell-head">
+                <span className="dnum">{d.getDate()}</span>
+                <span className="wknum">W{weekNum(d.getFullYear(), d.getMonth(), d.getDate())}</span>
+              </div>
+              <div className="ord-list">
+                {visible.map((o, j) => (
+                  <div key={j} className={`ord-chip ${o.dept} ${o.urgent ? 'urgent' : ''}`}>
+                    <span className="bar"/>
+                    <span className="lbl">{o.name}</span>
+                    <span className="qty">×{o.qty}</span>
+                  </div>
+                ))}
+                {more > 0 && <div className="more">+{more} more…</div>}
+              </div>
+              {dayOrders.length > 0 && (
+                <div className="cell-foot">
+                  <div className={`cell-load ${loadCls}`}><i style={{ width: `${load}%` }}/></div>
+                  <span className="pct">{Math.round(load)}%</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DayPanel({ dateKey, onClose }) {
+  if (!dateKey) {
+    return (
+      <div className="day-panel">
+        <div className="dp-head">
+          <span className="when">Day Detail</span>
+          <h3>No day selected</h3>
+        </div>
+        <div className="dp-body">
+          <div className="dp-empty">Click any day on the calendar to see its full order list, capacity, and shortcuts.</div>
+        </div>
+      </div>
+    );
+  }
+  const d = new Date(dateKey + 'T00:00:00');
+  const dayOrders = orders[dateKey] || [];
+  const dayName = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+  const totalParts = dayOrders.reduce((s, o) => s + o.qty, 0);
+  const urgent = dayOrders.filter(o => o.urgent).length;
+
+  // Group by dept
+  const grouped = {};
+  dayOrders.forEach(o => {
+    if (!grouped[o.dept]) grouped[o.dept] = [];
+    grouped[o.dept].push(o);
+  });
+
+  const isToday = dateKey === '2026-05-07';
+
+  return (
+    <div className="day-panel">
+      <div className="dp-head">
+        <span className="when">{isToday ? 'Today' : 'Day detail'} · Week {weekNum(d.getFullYear(), d.getMonth(), d.getDate())}</span>
+        <h3>{dayName} · {monthNames[d.getMonth()]} {d.getDate()}</h3>
+        <div className="h-meta">
+          <span><b>{dayOrders.length}</b> orders</span>
+          <span className="sep">·</span>
+          <span><b>{totalParts}</b> parts</span>
+          {urgent > 0 && <>
+            <span className="sep">·</span>
+            <span style={{color:'var(--red)', fontWeight: 700}}><b style={{color:'var(--red)'}}>{urgent}</b> urgent</span>
+          </>}
+        </div>
+      </div>
+      <div className="dp-body">
+        {dayOrders.length === 0 ? (
+          <div className="dp-empty">No orders scheduled for this day.<br/>Drag an order here or use Auto-plan.</div>
+        ) : (
+          <>
+            <div className="dp-stats">
+              <div className="s"><span className="v">{dayOrders.length}</span><span className="l">Orders</span></div>
+              <div className="s"><span className="v">{totalParts}</span><span className="l">Parts</span></div>
+              <div className="s"><span className="v">{Object.keys(grouped).length}</span><span className="l">Depts</span></div>
+            </div>
+            {Object.entries(grouped).map(([dept, list]) => (
+              <div key={dept} className="dp-section">
+                <h4>
+                  <I n={dept === 'steel' ? 'hammer' : dept === 'wood' ? 'saw' : dept === 'uphol' ? 'thread' : 'truck'} s={12}/>
+                  {deptName(dept)}
+                  <span className="count">{list.length}</span>
+                </h4>
+                {list.map((o, i) => (
+                  <div key={i} className={`dp-row ${dept} ${o.urgent ? 'urgent' : ''}`}>
+                    <span className="bar"/>
+                    <div className="info">
+                      <span className="name">{o.name}</span>
+                      <span className="meta">#{o.ord} {o.urgent && <b style={{color:'var(--red)'}}>· URGENT</b>}</span>
+                    </div>
+                    <div className="qty">{o.qty}<span className="lbl">qty</span></div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+      <div className="dp-foot">
+        <button><I n="open" s={12}/> Open Day</button>
+        <button><I n="print" s={12}/> Print</button>
+        <button className="primary"><I n="plus" s={12}/> Add Order</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [dept, setDept] = useState('all');
+  const [view, setView] = useState('month');
+  const [year, setYear] = useState(2026);
+  const [month, setMonth] = useState(4); // May (0-indexed)
+  const [selectedKey, setSelectedKey] = useState('2026-05-07');
+  const [theme, setTheme] = useState('light');
+  const todayKey = '2026-05-07';
+
+  const setMonthDelta = (n) => {
+    let m = month + n, y = year;
+    if (m < 0) { m = 11; y--; }
+    if (m > 11) { m = 0; y++; }
+    setMonth(m); setYear(y);
+  };
+
+  React.useEffect(() => {
+    document.body.dataset.theme = theme;
+  }, [theme]);
+
+  return (
+    <div className="app">
+      <Sidebar active="week"/>
+      <main className="main">
+        <div className="topbar">
+          <div>
+            <h1>Production Calendar</h1>
+            <div className="sub">Click any day to see orders due that day · drag to reschedule · capacity bar shows load</div>
+          </div>
+          <div className="topbar-actions">
+            <button className="ibtn"><I n="search" s={13}/> Find Order</button>
+            <button className="ibtn"><I n="clock" s={13}/> End of Day</button>
+            <button className="ibtn"><I n="key" s={13}/> Passwords</button>
+            <button className="ibtn" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+              <I n={theme === 'light' ? 'moon' : 'sun'} s={13}/>
+              {theme === 'light' ? 'Dark' : 'Light'}
+            </button>
+            <button className="ibtn primary"><I n="print" s={13}/> Print Calendar</button>
+          </div>
+        </div>
+
+        <div className="filter-bar">
+          <div className="dept-tabs">
+            <button className="dept-tab" aria-pressed={dept==='all'} onClick={()=>setDept('all')}><I n="grid" s={12}/> All Depts</button>
+            <button className="dept-tab" aria-pressed={dept==='steel'} onClick={()=>setDept('steel')}><I n="hammer" s={12}/> Steel</button>
+            <button className="dept-tab" aria-pressed={dept==='wood'} onClick={()=>setDept('wood')}><I n="saw" s={12}/> Wood</button>
+            <button className="dept-tab" aria-pressed={dept==='uphol'} onClick={()=>setDept('uphol')}><I n="thread" s={12}/> Upholstery</button>
+            <button className="dept-tab" aria-pressed={dept==='disp'} onClick={()=>setDept('disp')}><I n="truck" s={12}/> Dispatching</button>
+          </div>
+          <div style={{flex: 1}}/>
+          <div className="month-nav">
+            <button onClick={() => setMonthDelta(-1)} title="Previous month"><I n="chev-l" s={14}/></button>
+            <button className="today" onClick={() => { setMonth(4); setYear(2026); setSelectedKey(todayKey); }}>Today</button>
+            <button onClick={() => setMonthDelta(1)} title="Next month"><I n="chev-r" s={14}/></button>
+          </div>
+          <div className="view-switch">
+            <button aria-pressed={view==='month'} onClick={() => setView('month')}>Month</button>
+            <button aria-pressed={view==='week'} onClick={() => setView('week')}>Week</button>
+            <button aria-pressed={view==='list'} onClick={() => setView('list')}>List</button>
+          </div>
+        </div>
+
+        <div className="month-head">
+          <h2>{monthNames[month]} {year} <small>· Wk 18 → Wk 22</small></h2>
+          <div className="legend">
+            <div className="item"><span className="swatch" style={{background:'var(--blue)'}}/> Steel</div>
+            <div className="item"><span className="swatch" style={{background:'var(--green)'}}/> Wood</div>
+            <div className="item"><span className="swatch" style={{background:'var(--purple)'}}/> Upholstery</div>
+            <div className="item"><span className="swatch" style={{background:'var(--amber)'}}/> Dispatch</div>
+            <div className="item"><span className="swatch" style={{background:'var(--red)'}}/> Urgent</div>
+          </div>
+        </div>
+
+        <div className="layout">
+          <CalendarGrid year={year} month={month} dept={dept} selectedKey={selectedKey} onSelect={setSelectedKey} todayKey={todayKey} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
