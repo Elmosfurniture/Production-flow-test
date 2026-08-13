@@ -431,9 +431,53 @@ html, body {
 .toggle.on .switch::after { transform: translateX(14px); }
 .ic { display: inline-block; vertical-align: middle; }
 @media (max-width: 980px) {
-  .pri-row { grid-template-columns: 36px 60px 1fr 56px; }
-  .pri-row.with-cbx { grid-template-columns: 22px 36px 60px 1fr 56px; }
+  .pri-row { grid-template-columns: 36px 60px 1fr auto auto; }
+  .pri-row.with-cbx { grid-template-columns: 22px 36px 60px 1fr auto auto; }
   .pri-row .date-block, .pri-row .grip { display: none; }
+}
+
+/* ── Phones ───────────────────────────────────────────────────────
+   Below ~700px there isn't room for one row per order, so each row
+   becomes two lines: the order number above the product name, with the
+   rank, CR and edit button spanning both. Everything else stops fighting
+   for horizontal space — the meta row stacks and the search box flexes
+   instead of forcing the page sideways. */
+@media (max-width: 700px) {
+  .pri-row {
+    grid-template-columns: 30px minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "rank oid cr act"
+      "rank pname cr act";
+    gap: 2px 10px;
+    padding: 12px 10px;
+  }
+  .pri-row.with-cbx {
+    grid-template-columns: 20px 30px minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "cbx rank oid cr act"
+      "cbx rank pname cr act";
+  }
+  .pri-row .cbx        { grid-area: cbx; align-self: center; }
+  .pri-row .rank       { grid-area: rank; align-self: center; width: 28px; height: 28px; font-size: 12px; }
+  .pri-row .ord-id     { grid-area: oid; flex-direction: row; align-items: baseline; gap: 6px; font-size: 12px; }
+  .pri-row .prod-name  { grid-area: pname; min-width: 0; flex-wrap: wrap; gap: 6px; font-size: 14px; line-height: 1.3; }
+  .pri-row .cr-pill    { grid-area: cr; align-self: center; min-width: 46px; padding: 5px 7px; }
+  .pri-row .row-actions{ grid-area: act; align-self: center; }
+  .pri-row .prod-name .qty { font-size: 13px; padding: 1px 7px; }
+  .pstat { font-size: 9px; padding: 1px 6px; }
+
+  .section-head { padding: 14px 12px 12px; }
+  .week-tabs { padding: 12px 12px 0; }
+  .pri-list { padding: 6px 8px 12px; }
+  .pri-bulk { margin: 6px 8px 0; flex-wrap: wrap; gap: 8px; }
+  .pri-bulk .spacer { display: none; }
+
+  .meta-row { flex-wrap: wrap; gap: 10px; padding: 14px 12px 6px; }
+  .meta-row .l { width: 100%; }
+  .meta-row .r { width: 100%; flex-wrap: wrap; gap: 8px; }
+  .pri-search { flex: 1 1 150px; }
+  .pri-search input { width: 100%; min-width: 0; }
+  .filter-pop { max-width: calc(100vw - 16px); }
 }
 `
 
@@ -883,7 +927,7 @@ export default function PriorityScreen() {
                 <h2>Week Planning</h2>
                 <div className="sub">Stack orders by importance · 1 = next up</div>
               </div>
-              <div style={{display:'flex', gap:8}}>
+              <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
                 {(dept === 'wood' || dept === 'steel') && (
                   <button
                     className="ibtn"
