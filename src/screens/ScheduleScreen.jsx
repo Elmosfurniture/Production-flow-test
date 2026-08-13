@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar'
 import TopbarActions from '../components/TopbarActions'
 import WoodConveyorView from '../components/WoodConveyorView'
 import { useAppData } from '../store/AppDataContext'
-import { canEdit } from '../lib/auth'
+import { canEdit, getCurrentUser } from '../lib/auth'
 import { isoWeekDayToDate, isoWeek } from '../lib/scheduling'
 import {
   buildScheduleRows, writeScheduleRows, cleanupOrphanScheduleRows,
@@ -297,7 +297,20 @@ html, body { margin:0; padding:0; min-height: 100vh; font-family: 'Inter', -appl
 .action.queued:hover { filter: none; transform: none; }
 .action.done { background: var(--surface-2); color: var(--ink-3); cursor: default; box-shadow: none; }
 .action.done:hover { filter: none; transform: none; }
-.action-pair { display: inline-flex; gap: 6px; }
+/* Boss-only per-row "All done" — secondary to Start (outline, not filled) so
+   the operator's primary action still reads first. Turns amber on the second
+   tap, which is the confirm. */
+.action.alldone {
+  background: var(--surface); border-color: color-mix(in srgb, var(--green) 45%, var(--hairline-2));
+  color: var(--green); min-width: 92px; box-shadow: none;
+}
+.action.alldone:hover { background: color-mix(in srgb, var(--green) 10%, var(--surface)); }
+.action.alldone.confirm {
+  background: linear-gradient(180deg, #efa756 0%, #d8862e 100%);
+  border-color: #d8862e; color: white;
+  box-shadow: 0 4px 10px rgba(232,154,60,0.35), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+.action-pair { display: inline-flex; gap: 6px; align-items: center; }
 
 /* Break / cleaning row ─────────────────────────────────── */
 .break-row { display: grid; grid-template-columns: 22px 24px 92px 1fr auto; gap: 14px; align-items: center; padding: 10px 18px 10px 22px; background: var(--surface-2); }
@@ -727,7 +740,7 @@ function minLabel(m) {
   return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`
 }
 
-function JobRow({ job, sequence, onAction, onReorder, canReorder, reordering, machine, pending }) {
+function JobRow({ job, sequence, onAction, onReorder, canReorder, reordering, machine, pending, isBoss }) {
   const startMin = timeToMin(fmtTime(job.start_time))
   const endMin = timeToMin(fmtTime(job.end_time))
   const dur = durationLabel(startMin, endMin)
@@ -764,13 +777,44 @@ function JobRow({ job, sequence, onAction, onReorder, canReorder, reordering, ma
   const partName = job._part?.name || (job._stale ? 'Stale — regenerate schedule' : productName)
 
   const status = job.status || 'queued'
+
+  // Boss-only "All done" shortcut. Marking a row done normally means Start →
+  // MES Station → tick every part → Stop; when the boss already knows the whole
+  // batch is finished that round-trip is pure friction. This button writes the
+  // same end-state (status=completed + qty_done=full row qty) straight from the
+  // worklist. Two-tap confirm ("Sure?") because a completed row leaves the
+  // worklist immediately and there's no undo here.
+  const [confirmDone, setConfirmDone] = useState(false)
+  useEffect(() => {
+    if (!confirmDone) return
+    const t = setTimeout(() => setConfirmDone(false), 3000)
+    return () => clearTimeout(t)
+  }, [confirmDone])
+  // Not shown on a running row — Stop is already the "finish everything" button
+  // there, and three buttons on one row is a mis-click waiting to happen.
+  const allDoneEl = (isBoss && status !== 'completed' && status !== 'working') ? (
+    <button
+      className={`action alldone ${confirmDone ? 'confirm' : ''}`}
+      title={confirmDone
+        ? 'Click again to confirm'
+        : `Mark all ${totalUnits || 0} parts on this row done — no timer needed`}
+      onClick={() => {
+        if (!confirmDone) { setConfirmDone(true); return }
+        setConfirmDone(false)
+        onAction(job, 'alldone', totalUnits)
+      }}
+    >
+      <Check size={11} /> {confirmDone ? 'Sure?' : 'All done'}
+    </button>
+  ) : null
+
   let actionEl
   if (status === 'working') {
     actionEl = (
-      <span className="action-pair">
+      <>
         <button className="action pause" onClick={() => onAction(job, 'pause')}><Pause size={11} /> Pause</button>
         <button className="action stop"  onClick={() => onAction(job, 'stop')}><Square size={11} /> Stop</button>
-      </span>
+      </>
     )
   } else if (status === 'paused') {
     actionEl = <button className="action start" onClick={() => onAction(job, 'start')}><Play size={11} /> Resume</button>
@@ -836,12 +880,15 @@ function JobRow({ job, sequence, onAction, onReorder, canReorder, reordering, ma
           {ratePerPart}S/PT
         </span>
       </div>
-      {actionEl}
+      <span className="action-pair">
+        {allDoneEl}
+        {actionEl}
+      </span>
     </div>
   )
 }
 
-function MachineCard({ machine, jobs, allJobs, shift, open, onToggle, onJobAction, onReorder, canReorder, reordering, pendingSeq, nowMin, isToday }) {
+function MachineCard({ machine, jobs, allJobs, shift, open, onToggle, onJobAction, onReorder, canReorder, reordering, pendingSeq, nowMin, isToday, isBoss }) {
   const dept = machine.department
   const tint = DEPT_TINT[dept] || DEPT_TINT.steel
 
@@ -1008,7 +1055,7 @@ function MachineCard({ machine, jobs, allJobs, shift, open, onToggle, onJobActio
                 <AlertTriangle size={12} /> New order — times &amp; breaks update when you Regenerate
               </div>
               {reorderedJobs.map((j, i) => (
-                <JobRow key={`j${j.id}`} job={j} sequence={i + 1} onAction={onJobAction} onReorder={onReorder} canReorder={canReorder} reordering={reordering} machine={machine} pending />
+                <JobRow key={`j${j.id}`} job={j} sequence={i + 1} onAction={onJobAction} onReorder={onReorder} canReorder={canReorder} reordering={reordering} machine={machine} isBoss={isBoss} pending />
               ))}
             </>
           ) : (
@@ -1018,7 +1065,7 @@ function MachineCard({ machine, jobs, allJobs, shift, open, onToggle, onJobActio
                 if (it.type === 'job') {
                   seq++
                   return (
-                    <JobRow key={`j${it.data.id}`} job={it.data} sequence={seq} onAction={onJobAction} onReorder={onReorder} canReorder={canReorder} reordering={reordering} machine={machine} />
+                    <JobRow key={`j${it.data.id}`} job={it.data} sequence={seq} onAction={onJobAction} onReorder={onReorder} canReorder={canReorder} reordering={reordering} machine={machine} isBoss={isBoss} />
                   )
                 }
                 return <BreakRow key={`b${i}`} startMin={it.startMin} endMin={it.endMin} label={it.label} />
@@ -1219,6 +1266,9 @@ export default function ScheduleScreen() {
     applyScheduleReschedule, applyOrderUpdate,
   } = useAppData()
   const canModify = canEdit()
+  // Boss only (not Manager): the per-row "All done" shortcut bypasses the MES
+  // part-by-part tick, so it stays with the person who signs off the day.
+  const isBoss = getCurrentUser()?.role === 'Boss'
 
   const today = useMemo(() => new Date(), [])
   // Reschedule on Tracking can stash a "jump-to" date in sessionStorage
@@ -1642,7 +1692,7 @@ export default function ScheduleScreen() {
 
   // Click any action (Start / Pause / Stop / Resume) → MES Station for that
   // job. Status persistence happens inside MES Station.
-  const handleJobAction = async (job, kind) => {
+  const handleJobAction = async (job, kind, units) => {
     // Build the status patch first — start/pause/stop write to Supabase and
     // local cache. The per-machine bar can then show real "actually done"
     // progress as a green sub-fill alongside the amber dot (expected), and
@@ -1659,6 +1709,18 @@ export default function ScheduleScreen() {
       // schedule table honest across both windows.
       patch = { status: 'completed', completed_at: nowIso }
       if (job.qty != null && job.qty !== '') patch.qty_done = Number(job.qty)
+    } else if (kind === 'alldone') {
+      // Boss "All done" on the row — same end-state as Stop, but reachable
+      // without a Start → MES Station → tick-every-part round-trip. `units` is
+      // the row's displayed part count, which already falls back to
+      // order.qty × qty_per_unit when schedule.qty is NULL (legacy rows), so
+      // Tracking reads the row as fully done either way.
+      if (!isBoss) return
+      patch = { status: 'completed', completed_at: nowIso }
+      const n = Number(units)
+      if (Number.isFinite(n) && n > 0) patch.qty_done = n
+      else if (job.qty != null && job.qty !== '') patch.qty_done = Number(job.qty)
+      if (!job.started_at) patch.started_at = nowIso
     }
     if (patch) {
       try {
@@ -2074,6 +2136,7 @@ export default function ScheduleScreen() {
                   pendingSeq={pendingByMachine.get(m.id) || null}
                   nowMin={nowTick}
                   isToday={isToday}
+                  isBoss={isBoss}
                 />
               ))
             )
