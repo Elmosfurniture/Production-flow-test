@@ -31,3 +31,6 @@ dist-ssr
 
 # Claude runtime lock
 .claude/scheduled_tasks.lock
+
+# Contains the private VAPID push key - must never be uploaded
+docs/push-setup.md
