@@ -6,6 +6,7 @@ import { loadWoodStartOverrides, WOOD_START_EVENT } from '../lib/orderDeptStart'
 import { loadWoodJobStatus, setWoodJobStatus, woodJobKeyOf, WOOD_JOB_STATUS_EVENT } from '../lib/woodJobStatus'
 import { loadAllDayPlans, PARTS_DAY_EVENT } from '../lib/partsDayPlan'
 import { writeScheduleFocus } from '../lib/useDeptTab'
+import { getCurrentUser } from '../lib/auth'
 import { shiftForDate, timeToMin } from '../lib/scheduleEngine'
 import {
   ChevronRight, AlertTriangle, Coffee, Filter, Check,
@@ -158,7 +159,12 @@ const styles = `
 .wcv .action.pause { background: linear-gradient(180deg, #efa756 0%, #d8862e 100%); border-color: #d8862e; color: white; min-width: 78px; box-shadow: 0 4px 10px rgba(232,154,60,0.35), inset 0 1px 0 rgba(255,255,255,0.20), 0 1px 2px rgba(0,0,0,0.05); }
 .wcv .action.stop { background: linear-gradient(180deg, #df6a52 0%, #c44529 100%); border-color: #c44529; color: white; min-width: 72px; box-shadow: 0 4px 10px rgba(210,83,58,0.35), inset 0 1px 0 rgba(255,255,255,0.20), 0 1px 2px rgba(0,0,0,0.05); }
 .wcv .action.done { background: var(--surface-2); color: var(--ink-3); cursor: default; box-shadow: none; }
-.wcv .action-pair { display: inline-flex; gap: 6px; justify-self: end; }
+/* Boss-only per-row "All done" — outlined so Start still reads as the primary
+   action; turns amber on the second tap, which is the confirm. */
+.wcv .action.alldone { background: var(--surface); border-color: color-mix(in srgb, var(--green) 45%, var(--hairline-2)); color: var(--green); min-width: 92px; box-shadow: none; }
+.wcv .action.alldone:hover { background: color-mix(in srgb, var(--green) 10%, var(--surface)); }
+.wcv .action.alldone.confirm { background: linear-gradient(180deg, #efa756 0%, #d8862e 100%); border-color: #d8862e; color: white; box-shadow: 0 4px 10px rgba(232,154,60,0.35), inset 0 1px 0 rgba(255,255,255,0.20); }
+.wcv .action-pair { display: inline-flex; gap: 6px; justify-self: end; align-items: center; }
 .wcv .row .seq { width: 22px; height: 22px; border-radius: 6px; background: var(--amber-soft); color: var(--amber); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
 .wcv .row .when { font-size: 13px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.15; }
 .wcv .row .when .dash { color: var(--ink-3); margin-right: 2px; }
@@ -314,18 +320,45 @@ function MachinesFilter({ machines, hidden, onToggle, onAll, onNone, jobCountByN
   )
 }
 
-function JobRow({ job, sequence, status, onAction }) {
+function JobRow({ job, sequence, status, onAction, isBoss }) {
   const dur = durationLabel(job.startMin, job.endMin)
   const orderLabel = job.ord_nr ? `#${job.ord_nr}` : '—'
   const showProd = job.partName !== job.productName && job.productName
   const st = status?.status || 'queued'
+
+  // Boss-only "All done" shortcut. Marking a part done normally means Start →
+  // MES Station → tick every part → Stop; when the boss already knows the whole
+  // batch is finished that round-trip is pure friction. Writes the same end
+  // state straight from the day board. Two-tap confirm ("Sure?") because the
+  // row flips to Done with no undo here. Not shown on a running row — Stop
+  // already finishes those, and three buttons invites a mis-tap.
+  const [confirmDone, setConfirmDone] = useState(false)
+  useEffect(() => {
+    if (!confirmDone) return
+    const t = setTimeout(() => setConfirmDone(false), 3000)
+    return () => clearTimeout(t)
+  }, [confirmDone])
+  const allDoneEl = (isBoss && onAction && st !== 'completed' && st !== 'working') ? (
+    <button
+      className={`action alldone ${confirmDone ? 'confirm' : ''}`}
+      title={confirmDone ? 'Click again to confirm' : `Mark all ${job.units || 0} parts on this row done — no timer needed`}
+      onClick={() => {
+        if (!confirmDone) { setConfirmDone(true); return }
+        setConfirmDone(false)
+        onAction(job, 'alldone')
+      }}
+    >
+      <Check size={11} /> {confirmDone ? 'Sure?' : 'All done'}
+    </button>
+  ) : null
+
   let actionEl
   if (st === 'working') {
     actionEl = (
-      <span className="action-pair">
+      <>
         <button className="action pause" onClick={() => onAction?.(job, 'pause')}><Pause size={11} /> Pause</button>
         <button className="action stop" onClick={() => onAction?.(job, 'stop')}><Square size={11} /> Stop</button>
-      </span>
+      </>
     )
   } else if (st === 'paused') {
     actionEl = <button className="action start" onClick={() => onAction?.(job, 'start')}><Play size={11} /> Resume</button>
@@ -365,7 +398,7 @@ function JobRow({ job, sequence, status, onAction }) {
           <span className="sep">·</span>{job.seconds_per_part}S/PT
         </span>
       </div>
-      {onAction ? actionEl : <span />}
+      {onAction ? <span className="action-pair">{allDoneEl}{actionEl}</span> : <span />}
     </div>
   )
 }
@@ -381,7 +414,7 @@ function BreakRow({ startMin, endMin, label }) {
   )
 }
 
-function MachineCard({ machineName, color, rank, dayPlan, open, onToggle, onJobAction, statusMap, nowMin }) {
+function MachineCard({ machineName, color, rank, dayPlan, open, onToggle, onJobAction, statusMap, nowMin, isBoss }) {
   const jobs = dayPlan?.jobs || []
   const date = dayPlan?._date
   const isIdle = jobs.length === 0
@@ -484,6 +517,7 @@ function MachineCard({ machineName, color, rank, dayPlan, open, onToggle, onJobA
                       job={it.data}
                       sequence={seq}
                       status={statusMap?.get(jobKey)}
+                      isBoss={isBoss}
                       onAction={onJobAction ? (job, kind) => onJobAction(job, kind, dayPlan._date, machineName) : undefined}
                     />
                   )
@@ -565,6 +599,10 @@ export default function WoodConveyorView({ selectedDate, restoreFocus }) {
     bufferDaysByDept,
   } = useAppData()
 
+  // Boss only (not Manager): the per-row "All done" shortcut bypasses the MES
+  // part-by-part tick, so it stays with the person who signs off the day.
+  const isBoss = getCurrentUser()?.role === 'Boss'
+
   // Re-read the per-order wood-start overrides whenever they change (e.g. after
   // the order form saves a manual wood start), so the board reflects it live.
   const [startsVer, setStartsVer] = useState(0)
@@ -639,6 +677,19 @@ export default function WoodConveyorView({ selectedDate, restoreFocus }) {
     const nowIso = new Date().toISOString()
     if (kind === 'pause') { setWoodJobStatus(jobKey, { status: 'paused' }); return }
     if (kind === 'stop') { setWoodJobStatus(jobKey, { status: 'completed', completed_at: nowIso, qty_done: job.units }); return }
+    // Boss "All done" — same end state as Stop, reached without the MES
+    // round-trip. started_at is backfilled so a row never lands completed with
+    // no start stamp (the machine bar's elapsed estimate reads it).
+    if (kind === 'alldone') {
+      if (!isBoss) return
+      setWoodJobStatus(jobKey, {
+        status: 'completed',
+        started_at: statusMap.get(jobKey)?.started_at || nowIso,
+        completed_at: nowIso,
+        qty_done: job.units,
+      })
+      return
+    }
     // start / resume
     setWoodJobStatus(jobKey, { status: 'working', started_at: nowIso })
     // Remember which machine we're on so finishing the part at MES Station drops
@@ -822,6 +873,7 @@ export default function WoodConveyorView({ selectedDate, restoreFocus }) {
                 onJobAction={handleJobAction}
                 statusMap={statusMap}
                 nowMin={nowTick}
+                isBoss={isBoss}
               />
             ))
           )}
