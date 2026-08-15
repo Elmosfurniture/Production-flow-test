@@ -28,3 +28,11 @@ create table if not exists wood_job_status (
 -- The board loads one day at a time, so date is the hot filter.
 create index if not exists idx_wood_job_status_date
   on wood_job_status(job_date);
+
+-- Match every other table in this project: no RLS, reached with the anon key.
+-- Required explicitly — depending on how the table gets created (Table Editor,
+-- or a Supabase project that defaults it on) RLS can arrive enabled with zero
+-- policies, and that combination fails in the worst possible way: SELECT
+-- quietly returns an empty set instead of erroring, so the board looks like it
+-- synced and simply shows nothing, while every write is rejected with 42501.
+alter table wood_job_status disable row level security;

@@ -69,6 +69,16 @@ function noteRemoteFailure(where, error) {
     }
     return
   }
+  // RLS on with no policies is the nastiest failure here: SELECT returns an
+  // empty set rather than an error, so only the write tells you anything is
+  // wrong. Name the fix rather than echoing Postgres at whoever reads the log.
+  if (error?.code === '42501') {
+    console.warn(
+      `[woodJobStatus] Row-level security is blocking writes to "${TABLE}", so nothing syncs `
+      + `between devices. Fix: alter table ${TABLE} disable row level security;`
+    )
+    return
+  }
   console.warn(`[woodJobStatus] ${where} failed:`, error?.message || error)
 }
 
