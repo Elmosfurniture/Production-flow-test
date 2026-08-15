@@ -163,7 +163,10 @@ const styles = `
    action; turns amber on the second tap, which is the confirm. */
 .wcv .action.alldone { background: var(--surface); border-color: color-mix(in srgb, var(--green) 45%, var(--hairline-2)); color: var(--green); min-width: 92px; box-shadow: none; }
 .wcv .action.alldone:hover { background: color-mix(in srgb, var(--green) 10%, var(--surface)); }
-.wcv .action.alldone.confirm { background: linear-gradient(180deg, #efa756 0%, #d8862e 100%); border-color: #d8862e; color: white; box-shadow: 0 4px 10px rgba(232,154,60,0.35), inset 0 1px 0 rgba(255,255,255,0.20); }
+/* A finished row the boss can put back — looks like the inert Done chip but
+   invites the click that undoes a mis-tap. */
+.wcv .action.done.undoable { cursor: pointer; }
+.wcv .action.done.undoable:hover { background: var(--surface); color: var(--ink-2); border-color: var(--hairline-2); }
 .wcv .action-pair { display: inline-flex; gap: 6px; justify-self: end; align-items: center; }
 .wcv .row .seq { width: 22px; height: 22px; border-radius: 6px; background: var(--amber-soft); color: var(--amber); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
 .wcv .row .when { font-size: 13px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.15; }
@@ -329,26 +332,23 @@ function JobRow({ job, sequence, status, onAction, isBoss }) {
   // Boss-only "All done" shortcut. Marking a part done normally means Start →
   // MES Station → tick every part → Stop; when the boss already knows the whole
   // batch is finished that round-trip is pure friction. Writes the same end
-  // state straight from the day board. Two-tap confirm ("Sure?") because the
-  // row flips to Done with no undo here. Not shown on a running row — Stop
-  // already finishes those, and three buttons invites a mis-tap.
-  const [confirmDone, setConfirmDone] = useState(false)
-  useEffect(() => {
-    if (!confirmDone) return
-    const t = setTimeout(() => setConfirmDone(false), 3000)
-    return () => clearTimeout(t)
-  }, [confirmDone])
+  // state straight from the day board.
+  //
+  // ONE tap, deliberately. An earlier version asked for a second tap to
+  // confirm, which broke the whole point of the button: going down a machine's
+  // rows quickly, every row got its first tap only, armed nothing and silently
+  // reverted. Safety comes from undo instead — a completed wood row stays on
+  // the board, so tapping Done puts it back to queued.
+  //
+  // Not shown on a running row: Stop already finishes those, and a third button
+  // on one row invites the mis-tap this is trying to avoid.
   const allDoneEl = (isBoss && onAction && st !== 'completed' && st !== 'working') ? (
     <button
-      className={`action alldone ${confirmDone ? 'confirm' : ''}`}
-      title={confirmDone ? 'Click again to confirm' : `Mark all ${job.units || 0} parts on this row done — no timer needed`}
-      onClick={() => {
-        if (!confirmDone) { setConfirmDone(true); return }
-        setConfirmDone(false)
-        onAction(job, 'alldone')
-      }}
+      className="action alldone"
+      title={`Mark all ${job.units || 0} parts on this row done — no timer needed`}
+      onClick={() => onAction(job, 'alldone')}
     >
-      <Check size={11} /> {confirmDone ? 'Sure?' : 'All done'}
+      <Check size={11} /> All done
     </button>
   ) : null
 
@@ -363,7 +363,11 @@ function JobRow({ job, sequence, status, onAction, isBoss }) {
   } else if (st === 'paused') {
     actionEl = <button className="action start" onClick={() => onAction?.(job, 'start')}><Play size={11} /> Resume</button>
   } else if (st === 'completed') {
-    actionEl = <button className="action done" disabled>Done</button>
+    // The boss can tap a finished row to put it back — this is the undo that
+    // lets "All done" be a single tap. Everyone else sees it inert, as before.
+    actionEl = isBoss && onAction
+      ? <button className="action done undoable" title="Marked done — click to put this row back to not started" onClick={() => onAction(job, 'undone')}>Done</button>
+      : <button className="action done" disabled>Done</button>
   } else {
     actionEl = <button className="action start" onClick={() => onAction?.(job, 'start')}><Play size={11} /> Start</button>
   }
@@ -688,6 +692,12 @@ export default function WoodConveyorView({ selectedDate, restoreFocus }) {
         completed_at: nowIso,
         qty_done: job.units,
       })
+      return
+    }
+    // Undo for a mis-tapped "All done" — straight back to not started.
+    if (kind === 'undone') {
+      if (!isBoss) return
+      setWoodJobStatus(jobKey, { status: 'queued', started_at: null, completed_at: null, qty_done: 0 })
       return
     }
     // start / resume

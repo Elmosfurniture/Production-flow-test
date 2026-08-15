@@ -305,11 +305,6 @@ html, body { margin:0; padding:0; min-height: 100vh; font-family: 'Inter', -appl
   color: var(--green); min-width: 92px; box-shadow: none;
 }
 .action.alldone:hover { background: color-mix(in srgb, var(--green) 10%, var(--surface)); }
-.action.alldone.confirm {
-  background: linear-gradient(180deg, #efa756 0%, #d8862e 100%);
-  border-color: #d8862e; color: white;
-  box-shadow: 0 4px 10px rgba(232,154,60,0.35), inset 0 1px 0 rgba(255,255,255,0.20);
-}
 .action-pair { display: inline-flex; gap: 6px; align-items: center; }
 
 /* Break / cleaning row ─────────────────────────────────── */
@@ -782,29 +777,22 @@ function JobRow({ job, sequence, onAction, onReorder, canReorder, reordering, ma
   // MES Station → tick every part → Stop; when the boss already knows the whole
   // batch is finished that round-trip is pure friction. This button writes the
   // same end-state (status=completed + qty_done=full row qty) straight from the
-  // worklist. Two-tap confirm ("Sure?") because a completed row leaves the
-  // worklist immediately and there's no undo here.
-  const [confirmDone, setConfirmDone] = useState(false)
-  useEffect(() => {
-    if (!confirmDone) return
-    const t = setTimeout(() => setConfirmDone(false), 3000)
-    return () => clearTimeout(t)
-  }, [confirmDone])
+  // worklist.
+  //
+  // ONE tap, deliberately. An earlier version asked for a second tap to
+  // confirm, which broke the whole point of the button: going down a machine's
+  // rows quickly, every row got its first tap only, armed nothing and silently
+  // reverted.
+  //
   // Not shown on a running row — Stop is already the "finish everything" button
   // there, and three buttons on one row is a mis-click waiting to happen.
   const allDoneEl = (isBoss && status !== 'completed' && status !== 'working') ? (
     <button
-      className={`action alldone ${confirmDone ? 'confirm' : ''}`}
-      title={confirmDone
-        ? 'Click again to confirm'
-        : `Mark all ${totalUnits || 0} parts on this row done — no timer needed`}
-      onClick={() => {
-        if (!confirmDone) { setConfirmDone(true); return }
-        setConfirmDone(false)
-        onAction(job, 'alldone', totalUnits)
-      }}
+      className="action alldone"
+      title={`Mark all ${totalUnits || 0} parts on this row done — no timer needed`}
+      onClick={() => onAction(job, 'alldone', totalUnits)}
     >
-      <Check size={11} /> {confirmDone ? 'Sure?' : 'All done'}
+      <Check size={11} /> All done
     </button>
   ) : null
 
