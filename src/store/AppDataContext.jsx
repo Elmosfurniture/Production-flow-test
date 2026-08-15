@@ -9,7 +9,7 @@ import {
   isoWeek,
 } from '../lib/scheduling'
 import { crBand } from '../lib/priority'
-import { loadWoodJobStatus, WOOD_JOB_STATUS_EVENT } from '../lib/woodJobStatus'
+import { loadWoodJobStatus, hydrateWoodJobStatus, WOOD_JOB_STATUS_EVENT } from '../lib/woodJobStatus'
 
 // Global in-memory cache for the whole app. The factory floor runs on tablets
 // where every screen change must be instant — so on app start we pull every
@@ -524,8 +524,8 @@ export function AppDataProvider({ children }) {
     return out
   }, [orders, schedule, lookups])
 
-  // Wood day-board job statuses (localStorage — wood jobs aren't persisted
-  // schedule rows yet). Kept in state and refreshed on the store's change
+  // Wood day-board job statuses (own `wood_job_status` table — wood jobs aren't
+  // persisted schedule rows). Kept in state and refreshed on the store's change
   // event so a "Done" tap on the wood conveyor or MES Station flows into
   // deptProgressByOrderId, and from there into every screen at once.
   const [woodJobStatus, setWoodJobStatusMap] = useState(() => loadWoodJobStatus())
@@ -537,6 +537,15 @@ export function AppDataProvider({ children }) {
       window.removeEventListener(WOOD_JOB_STATUS_EVENT, sync)
       window.removeEventListener('storage', sync)
     }
+  }, [])
+  // Pull the server's copy on boot, and again when the tab regains focus — the
+  // boss marks parts off on his phone on the floor, then walks back to the PC
+  // that's been sitting on the Schedule screen all morning.
+  useEffect(() => {
+    hydrateWoodJobStatus()
+    const onFocus = () => hydrateWoodJobStatus()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
   }, [])
 
   // Per-department progress: order_id → Map<dept, { hasWork, started, complete }>.
