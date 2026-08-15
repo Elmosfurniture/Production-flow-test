@@ -77,9 +77,13 @@ export function loadWoodJobStatus() {
   return cache
 }
 
-// Pull every stored status from the server and replace the cache. Server wins:
-// a row deleted centrally should disappear here too, and localStorage is only a
-// warm-start cache, never a second source of truth. Safe to call repeatedly.
+// Pull every stored status from the server and rebuild the cache.
+//
+// The server is the source of truth for anything it knows about. Keys that
+// exist ONLY on this device are pushed up rather than dropped: that covers the
+// marks made before this table existed (device-local era) and anything ticked
+// off while the phone had no signal. Nothing in the app deletes a status, so
+// "missing on the server" always means "never got there", never "removed".
 export async function hydrateWoodJobStatus() {
   const { data, error } = await supabase
     .from(TABLE)
@@ -95,9 +99,34 @@ export async function hydrateWoodJobStatus() {
       qty_done: r.qty_done ?? 0,
     })
   }
+
+  const orphans = []
+  for (const [jobKey, v] of cache) {
+    if (next.has(jobKey)) continue
+    const parts = parseJobKey(jobKey)
+    if (!parts) continue
+    next.set(jobKey, v)
+    orphans.push({
+      ...parts,
+      status: v.status ?? 'queued',
+      started_at: v.started_at ?? null,
+      completed_at: v.completed_at ?? null,
+      qty_done: v.qty_done ?? 0,
+      updated_at: new Date().toISOString(),
+    })
+  }
+
   cache = next
   writeLocal(cache)
   emit()
+
+  if (orphans.length > 0) {
+    const { error: upErr } = await supabase
+      .from(TABLE)
+      .upsert(orphans, { onConflict: 'order_id,machine_step_id,job_date' })
+    if (upErr) noteRemoteFailure('backfill', upErr)
+    else console.info(`[woodJobStatus] Uploaded ${orphans.length} device-local status(es) to the server.`)
+  }
   return cache
 }
 
