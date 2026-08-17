@@ -8,6 +8,7 @@ import { loadAllDayPlans, PARTS_DAY_EVENT } from '../lib/partsDayPlan'
 import { writeScheduleFocus } from '../lib/useDeptTab'
 import { getCurrentUser } from '../lib/auth'
 import { shiftForDate, timeToMin } from '../lib/scheduleEngine'
+import { isoWeek } from '../lib/scheduling'
 import {
   ChevronRight, AlertTriangle, Coffee, Filter, Check,
   Trees, ArrowRight, ChevronsDown, ChevronsUp,
@@ -81,6 +82,20 @@ const styles = `
 .wcv .filter-popover .pop-item .lbl { font-size: 13px; color: var(--ink); font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wcv .filter-popover .pop-item .daytag { font-size: 9px; font-weight: 700; color: var(--blue, #4677c8); background: var(--blue-soft, rgba(70,119,200,0.12)); padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
 .wcv .filter-popover .pop-item .jobcount { font-size: 11px; font-weight: 700; color: var(--ink-3); font-variant-numeric: tabular-nums; flex-shrink: 0; min-width: 14px; text-align: right; }
+/* Start-day filter: production weeks, each holding its start days ─────────── */
+.wcv .filter-popover.start-filter .filter-btn .badge { text-transform: none; }
+.wcv .filter-popover .pop-empty { padding: 16px 14px; font-size: 12px; color: var(--ink-3); }
+.wcv .filter-popover .wk-group + .wk-group { border-top: 1px solid var(--hairline); margin-top: 4px; padding-top: 4px; }
+.wcv .filter-popover .wk-head { display: flex; align-items: center; gap: 10px; padding: 8px 14px; cursor: pointer; user-select: none; }
+.wcv .filter-popover .wk-head:hover { background: var(--surface-2); }
+.wcv .filter-popover .wk-head .cbx { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--hairline-2); background: var(--surface); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wcv .filter-popover .wk-head.checked .cbx { background: var(--navy); border-color: var(--navy); color: white; }
+.wcv .filter-popover .wk-head .lbl { font-size: 11px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; flex: 1; }
+.wcv .filter-popover .wk-head .jobcount { font-size: 11px; font-weight: 700; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.wcv .filter-popover .pop-item.day { padding-left: 34px; }
+.wcv .filter-popover .pop-item.day .lbl { font-variant-numeric: tabular-nums; }
+/* "showing 2 of 9" caption on a card whose rows are narrowed by the filter. */
+.wcv .mc-head .substats .filter-tag { margin-left: 8px; font-size: 10px; font-weight: 700; color: var(--amber); background: var(--amber-soft); padding: 1px 7px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.05em; }
 
 /* Warnings */
 .wcv .warns { background: var(--surface); border: 1px solid rgba(210,83,58,0.25); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
@@ -283,6 +298,82 @@ function IOSSwitch({ on, onChange }) {
   )
 }
 
+const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MON_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const startDayLabel = (dateStr) => {
+  const d = strToDate(dateStr)
+  return `${DOW_SHORT[d.getDay()]} ${d.getDate()} ${MON_SHORT[d.getMonth()]}`
+}
+
+// Filter the board down to the batches that STARTED on a chosen week/day.
+//
+// The same product gets made more than once, started on different days. On any
+// given day those batches sit side by side on a machine with identical part
+// names, so there's no way to tell which one you're ticking off. Pick a start
+// day here and the board shows only that batch — and keeps showing only it as
+// you walk the day strip forward and it moves through its steps.
+//
+// Grouped by production week, with the week header selecting the whole week,
+// because "which week did we start it" is usually how the shop remembers it.
+function StartFilter({ weeks, selected, onToggleDay, onToggleWeek, onAll }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    window.addEventListener('mousedown', onDown)
+    return () => window.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  const active = selected.size > 0
+  const label = !active
+    ? 'All starts'
+    : selected.size === 1
+      ? startDayLabel([...selected][0])
+      : `${selected.size} start days`
+
+  return (
+    <div className="filter-wrap" ref={ref}>
+      <button type="button" className={`filter-btn ${active ? 'has-filter' : ''}`} onClick={() => setOpen((o) => !o)}>
+        <Filter size={13} /> Started <span className="badge">{label}</span>
+      </button>
+      {open && (
+        <div className="filter-popover start-filter">
+          <div className="pop-head">
+            <span className="ttl">Show items started on</span>
+            <div className="actions"><button onClick={onAll}>All</button></div>
+          </div>
+          <div className="pop-list">
+            {weeks.length === 0 && <div className="pop-empty">No wood items scheduled.</div>}
+            {weeks.map((w) => {
+              const allOn = w.days.every((d) => selected.has(d.date))
+              return (
+                <div key={w.week} className="wk-group">
+                  <div className={`wk-head ${allOn ? 'checked' : ''}`} onClick={() => onToggleWeek(w)}>
+                    <span className="cbx">{allOn && <Check size={12} strokeWidth={3} />}</span>
+                    <span className="lbl">Week {w.week}</span>
+                    <span className="jobcount">{w.orderCount}</span>
+                  </div>
+                  {w.days.map((d) => {
+                    const checked = selected.has(d.date)
+                    return (
+                      <div key={d.date} className={`pop-item day ${checked ? 'checked' : ''}`} onClick={() => onToggleDay(d.date)}>
+                        <span className="cbx">{checked && <Check size={12} strokeWidth={3} />}</span>
+                        <span className="lbl">{startDayLabel(d.date)}</span>
+                        <span className="jobcount">{d.orderCount}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function MachinesFilter({ machines, hidden, onToggle, onAll, onNone, jobCountByName, dayByName }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -418,8 +509,10 @@ function BreakRow({ startMin, endMin, label }) {
   )
 }
 
-function MachineCard({ machineName, color, rank, dayPlan, open, onToggle, onJobAction, statusMap, nowMin, isBoss }) {
-  const jobs = dayPlan?.jobs || []
+function MachineCard({ machineName, color, rank, dayPlan, open, onToggle, onJobAction, statusMap, nowMin, isBoss, visibleOrderIds }) {
+  // Stable identity — several memos below key off this, and a fresh [] every
+  // render would recompute all of them.
+  const jobs = useMemo(() => dayPlan?.jobs || [], [dayPlan])
   const date = dayPlan?._date
   const isIdle = jobs.length === 0
   const totalParts = jobs.reduce((s, j) => s + (j.units || 0), 0)
@@ -427,8 +520,19 @@ function MachineCard({ machineName, color, rank, dayPlan, open, onToggle, onJobA
   const capacity = dayPlan?.capacity || 0
   const pct = capacity > 0 ? Math.min(100, (totalWorkMin / capacity) * 100) : 0
   const overflowed = !!dayPlan?.overflowed
+  // The start filter narrows the ROW LIST only — the header stats, the load bar
+  // and the done count stay on the machine's whole day. Filtering those too
+  // would make the bar read "half empty" while the machine is in fact full,
+  // which is exactly the kind of lie that makes the board untrustworthy.
+  const rowJobs = useMemo(
+    () => (visibleOrderIds ? jobs.filter((j) => visibleOrderIds.has(j.orderId)) : jobs),
+    [jobs, visibleOrderIds],
+  )
+  const hiddenByFilter = jobs.length - rowJobs.length
   const shift = useMemo(() => (jobs.length ? shiftForDate(strToDate(dayPlan._date)) : null), [jobs, dayPlan])
-  const items = useMemo(() => (shift ? buildTimeline(jobs, shift) : []), [jobs, shift])
+  // Times come from each job's own startMin/endMin, so dropping rows never
+  // shifts the ones that remain — they stay where they really sit in the day.
+  const items = useMemo(() => (shift ? buildTimeline(rowJobs, shift) : []), [rowJobs, shift])
 
   // How many of this machine's jobs are finished today (from the wood job
   // status store), + the work-minutes actually done, for the green fill.
@@ -483,6 +587,11 @@ function MachineCard({ machineName, color, rank, dayPlan, open, onToggle, onJobA
           <span className="name">{machineName}{rank != null && <span className="daytag" title="This machine's route rank (nominal stage). Jobs below show each order's own day-offset.">Rank {rank}</span>}</span>
           <span className="substats">
             {isIdle ? <span className="idle-tag">No work this day</span> : <>{jobs.length} job{jobs.length === 1 ? '' : 's'} · <b style={{ color: doneJobs > 0 ? 'var(--green)' : 'var(--ink-3)' }}>{doneJobs} done</b> · {totalParts} parts · {totalWorkMin} of {capacity} min</>}
+            {hiddenByFilter > 0 && (
+              <span className="filter-tag" title="Rows from other start days are hidden. The counts and the bar above still cover the machine's whole day.">
+                showing {rowJobs.length} of {jobs.length}
+              </span>
+            )}
           </span>
         </div>
         <div className="num-stack">
@@ -508,6 +617,10 @@ function MachineCard({ machineName, color, rank, dayPlan, open, onToggle, onJobA
         <div className="mc-body">
           {isIdle ? (
             <div className="empty-row">No work on this machine this day.</div>
+          ) : rowJobs.length === 0 ? (
+            <div className="empty-row">
+              This machine has {jobs.length} job{jobs.length === 1 ? '' : 's'} today, but none from the start day{jobs.length === 1 ? '' : 's'} you picked.
+            </div>
           ) : (
             (() => {
               let seq = 0
@@ -734,6 +847,70 @@ export default function WoodConveyorView({ selectedDate, restoreFocus }) {
     return m
   }, [allMachines])
 
+  // ---- Start-day filter ----------------------------------------------------
+  // Each order route carries the date its wood work starts (Day 0). Two batches
+  // of the same product differ only by that date, so it's the handle we filter
+  // on. Empty selection = show everything.
+  const [startSel, setStartSel] = useState(() => new Set())
+
+  const startByOrderId = useMemo(() => {
+    const m = new Map()
+    for (const r of (result.orders || [])) if (r.startDate) m.set(r.orderId, r.startDate)
+    return m
+  }, [result])
+
+  // Distinct start days, grouped by production week, newest week last so the
+  // list reads in the order the shop works through it.
+  const startWeeks = useMemo(() => {
+    const byDate = new Map()
+    for (const r of (result.orders || [])) {
+      if (!r.startDate) continue
+      byDate.set(r.startDate, (byDate.get(r.startDate) || 0) + 1)
+    }
+    const byWeek = new Map()
+    for (const [date, orderCount] of byDate) {
+      const wk = isoWeek(strToDate(date))
+      if (!byWeek.has(wk)) byWeek.set(wk, { week: wk, days: [], orderCount: 0 })
+      const g = byWeek.get(wk)
+      g.days.push({ date, orderCount })
+      g.orderCount += orderCount
+    }
+    const out = [...byWeek.values()]
+    for (const g of out) g.days.sort((a, b) => a.date.localeCompare(b.date))
+    out.sort((a, b) => a.week - b.week)
+    return out
+  }, [result])
+
+  // Drop selections that no longer exist (an order shipped, the plan changed)
+  // so a stale pick can't silently hide the whole board.
+  const liveStartDates = useMemo(
+    () => new Set(startWeeks.flatMap((w) => w.days.map((d) => d.date))),
+    [startWeeks],
+  )
+  const activeStartSel = useMemo(() => {
+    const s = new Set()
+    for (const d of startSel) if (liveStartDates.has(d)) s.add(d)
+    return s
+  }, [startSel, liveStartDates])
+
+  const visibleOrderIds = useMemo(() => {
+    if (activeStartSel.size === 0) return null      // null = no filter
+    const ids = new Set()
+    for (const [orderId, date] of startByOrderId) if (activeStartSel.has(date)) ids.add(orderId)
+    return ids
+  }, [activeStartSel, startByOrderId])
+
+  const toggleStartDay = (date) => setStartSel((prev) => {
+    const n = new Set(prev); n.has(date) ? n.delete(date) : n.add(date); return n
+  })
+  const toggleStartWeek = (w) => setStartSel((prev) => {
+    const n = new Set(prev)
+    const allOn = w.days.every((d) => n.has(d.date))
+    for (const d of w.days) { if (allOn) n.delete(d.date); else n.add(d.date) }
+    return n
+  })
+  const clearStartFilter = () => setStartSel(new Set())
+
   const { cards, jobCountByName, filterList } = useMemo(() => {
     if (!dateStr) return { cards: [], jobCountByName: new Map(), filterList: [] }
     const jobCount = new Map()
@@ -750,6 +927,11 @@ export default function WoodConveyorView({ selectedDate, restoreFocus }) {
     }
     let list = onlyWithWork ? withWork : [...withWork, ...idleForDay]
     list = list.filter((c) => !hidden.has(c.name))
+    // With a start filter on, "only with work" means work from the picked
+    // batches — otherwise you'd scroll past machines with nothing to tick.
+    if (visibleOrderIds && onlyWithWork) {
+      list = list.filter((c) => !c.plan || c.plan.jobs.some((j) => visibleOrderIds.has(j.orderId)))
+    }
     list.sort((a, b) => {
       const ad = a.mach.rank ?? 99, bd = b.mach.rank ?? 99
       if (ad !== bd) return ad - bd
@@ -759,7 +941,7 @@ export default function WoodConveyorView({ selectedDate, restoreFocus }) {
     for (const c of idleForDay) flNames.add(c.name)
     const filterList = [...flNames].sort()
     return { cards: list, jobCountByName: jobCount, filterList }
-  }, [result, dateStr, onlyWithWork, hidden, dayByName, allMachines])
+  }, [result, dateStr, onlyWithWork, hidden, dayByName, allMachines, visibleOrderIds])
 
   const toggleCard = (name) => setOpenCards((prev) => {
     const n = new Set(prev); n.has(name) ? n.delete(name) : n.add(name); return n
@@ -836,6 +1018,15 @@ export default function WoodConveyorView({ selectedDate, restoreFocus }) {
               />
             )}
             {view === 'machines' && (
+              <StartFilter
+                weeks={startWeeks}
+                selected={activeStartSel}
+                onToggleDay={toggleStartDay}
+                onToggleWeek={toggleStartWeek}
+                onAll={clearStartFilter}
+              />
+            )}
+            {view === 'machines' && (
               <div className="toggle-pill" onClick={() => setOnlyWithWork((v) => !v)}>
                 <IOSSwitch on={onlyWithWork} onChange={setOnlyWithWork} />
                 <span className="lbl">Only with work</span>
@@ -884,6 +1075,7 @@ export default function WoodConveyorView({ selectedDate, restoreFocus }) {
                 statusMap={statusMap}
                 nowMin={nowTick}
                 isBoss={isBoss}
+                visibleOrderIds={visibleOrderIds}
               />
             ))
           )}
