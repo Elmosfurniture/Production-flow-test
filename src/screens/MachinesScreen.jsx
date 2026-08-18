@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar'
 import TopbarActions from '../components/TopbarActions'
 import { addMachine, updateMachine, deleteMachine, reorderMachines } from '../lib/seedMachines'
 import { canEdit, getCurrentUser } from '../lib/auth'
+import { checkpointNames } from '../lib/checkpoints'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useAppData } from '../store/AppDataContext'
 import {
@@ -161,6 +162,7 @@ html, body {
 .mach-row .info .name { font-size: 14px; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 8px; }
 .mach-row .info .name .bn { background: var(--amber-soft); color: var(--amber); font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.08em; text-transform: uppercase; }
 .mach-row .info .name .day-badge { background: var(--blue-soft); color: var(--blue); font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase; }
+.mach-row .info .name .cp-badge { background: var(--teal-soft); color: var(--teal); font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase; }
 .mach-row .info .status { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-top: 2px; }
 .mach-row .info .status.active { color: var(--green); }
 .mach-row .util { text-align: right; font-variant-numeric: tabular-nums; }
@@ -199,6 +201,10 @@ html, body {
 .edit-card .e-err { font-size: 12px; color: var(--red); }
 .edit-card .bn-toggle { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 500; color: var(--ink-2); cursor: pointer; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--hairline-2); border-radius: 10px; }
 .edit-card .bn-toggle input { width: 16px; height: 16px; accent-color: var(--navy); cursor: pointer; }
+.edit-card .cp-picks { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.edit-card .cp-pick { appearance: none; border: 1px solid var(--hairline-2); background: var(--surface-2); color: var(--ink-2); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; }
+.edit-card .cp-pick:hover { background: var(--teal-soft); color: var(--teal); border-color: rgba(58,154,175,0.35); }
+.edit-card .cp-pick.on { background: var(--teal); color: #fff; border-color: var(--teal); }
 `
 
 // UI tab id → value stored in `machines.department`.
@@ -278,6 +284,9 @@ function MachRow({
           {m.woodDay != null && m.woodDay !== '' && (
             <span className="day-badge">{woodDayShort(m.woodDay)}</span>
           )}
+          {m.checkpoint && (
+            <span className="cp-badge" title="Checkpoint group this machine belongs to">{m.checkpoint}</span>
+          )}
         </div>
         <div className={`status ${on ? 'active' : ''}`}>{statusText}</div>
       </div>
@@ -299,14 +308,21 @@ function MachRow({
   )
 }
 
-function EditMachineModal({ machine, onCancel, onSaved, onDeleted }) {
+function EditMachineModal({ machine, allMachines, onCancel, onSaved, onDeleted }) {
   const [name, setName] = useState(machine.name || '')
   const [area, setArea] = useState(machine.area || '')
   const [color, setColor] = useState(machine.color || DEFAULT_COLOR)
   const [bottleneck, setBottleneck] = useState(Boolean(machine.bottleneck))
   const [setupTime, setSetupTime] = useState(Number(machine.setup_time_min) || 0)
   const [woodDay, setWoodDay] = useState(machine.wood_day == null ? '' : machine.wood_day)
+  const [checkpoint, setCheckpoint] = useState(machine.checkpoint || '')
   const isWood = machine.department === 'wood'
+  // Existing groups in THIS department — picking one from the list is how a
+  // machine joins an existing checkpoint instead of starting a new one by typo.
+  const cpOptions = useMemo(
+    () => checkpointNames(allMachines, machine.department),
+    [allMachines, machine.department],
+  )
   const [rate, setRate] = useState(machine.rate_per_hour != null ? String(machine.rate_per_hour) : '')
   // Labour rate is sensitive — only the Boss can see or edit it.
   const isBoss = getCurrentUser()?.role === 'Boss'
@@ -322,6 +338,7 @@ function EditMachineModal({ machine, onCancel, onSaved, onDeleted }) {
     color !== (machine.color || DEFAULT_COLOR) ||
     bottleneck !== Boolean(machine.bottleneck) ||
     setupTime !== (Number(machine.setup_time_min) || 0) ||
+    checkpoint.trim() !== (machine.checkpoint || '').trim() ||
     (isWood && (woodDay === '' ? null : Number(woodDay)) !== (machine.wood_day ?? null)) ||
     (isBoss && (rate === '' ? null : Math.max(0, Number(rate) || 0)) !== (machine.rate_per_hour ?? null))
   const busy = saving || deleting
@@ -339,6 +356,7 @@ function EditMachineModal({ machine, onCancel, onSaved, onDeleted }) {
       color,
       bottleneck,
       setup_time_min: Math.max(0, Number(setupTime) || 0),
+      checkpoint: checkpoint.trim() || null,
     }
     // Wood machines carry a conveyor day; other depts ignore the column.
     if (isWood) patch.wood_day = woodDay === '' ? null : Number(woodDay)
@@ -415,6 +433,36 @@ function EditMachineModal({ machine, onCancel, onSaved, onDeleted }) {
           <Stepper value={setupTime} onChange={setSetupTime} step={5} min={0} />
           <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>
             Charged once per product per day on this machine. Same product back-to-back skips setup.
+          </div>
+        </div>
+        <div className="e-field">
+          <label>Checkpoint</label>
+          <input
+            type="text"
+            list={`cp-list-${machine.id}`}
+            value={checkpoint}
+            onChange={(e) => setCheckpoint(e.target.value)}
+            placeholder="e.g. Cutting — leave blank for none"
+          />
+          <datalist id={`cp-list-${machine.id}`}>
+            {cpOptions.map((c) => <option key={c} value={c} />)}
+          </datalist>
+          {cpOptions.length > 0 && (
+            <div className="cp-picks">
+              {cpOptions.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`cp-pick ${checkpoint.trim() === c ? 'on' : ''}`}
+                  onClick={() => setCheckpoint(checkpoint.trim() === c ? '' : c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>
+            Machines sharing a checkpoint name form one group. Tracking shows how many parts of an order are through the whole group.
           </div>
         </div>
         {isWood && (
@@ -509,10 +557,12 @@ export default function MachinesScreen() {
   const [formBottleneck, setFormBottleneck] = useState(false)
   const [formSetupTime, setFormSetupTime] = useState(0)
   const [formWoodDay, setFormWoodDay] = useState('')
+  const [formCheckpoint, setFormCheckpoint] = useState('')
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState(null)
 
   const dbDept = UI_TO_DB_DEPT[dept] // null when dept === 'all'
+  const cpOptions = useMemo(() => checkpointNames(allMachines, dbDept), [allMachines, dbDept])
   const canAdd = !!dbDept && formName.trim().length > 0 && !adding
 
   // Drag-to-reorder state.
@@ -613,6 +663,7 @@ export default function MachinesScreen() {
         bottleneck: formBottleneck,
         setup_time_min: formSetupTime,
         wood_day: dbDept === 'wood' && formWoodDay !== '' ? Number(formWoodDay) : null,
+        checkpoint: formCheckpoint.trim() || null,
       })
       setFormName('')
       setFormArea('')
@@ -620,6 +671,7 @@ export default function MachinesScreen() {
       setFormBottleneck(false)
       setFormSetupTime(0)
       setFormWoodDay('')
+      setFormCheckpoint('')
       applyMachineUpsert(created)
     } catch (e) {
       setAddError(e.message || String(e))
@@ -707,6 +759,18 @@ export default function MachinesScreen() {
               </div>
               )}
               <div className="field">
+                <label>Checkpoint</label>
+                <input
+                  list="cp-list-add"
+                  placeholder="e.g. Cutting"
+                  value={formCheckpoint}
+                  onChange={(e) => setFormCheckpoint(e.target.value)}
+                />
+                <datalist id="cp-list-add">
+                  {cpOptions.map((c) => <option key={c} value={c} />)}
+                </datalist>
+              </div>
+              <div className="field">
                 <label>Colour</label>
                 <select value={formColor} onChange={(e) => setFormColor(e.target.value)}>
                   {COLOR_SWATCHES.map(c => (
@@ -765,6 +829,7 @@ export default function MachinesScreen() {
                     area: m.area,
                     bn: m.bottleneck,
                     woodDay: m.department === 'wood' ? m.wood_day : null,
+                    checkpoint: m.checkpoint,
                     active: m.active,
                     util: 0,
                     min: 0,
@@ -789,6 +854,7 @@ export default function MachinesScreen() {
           {editing && (
             <EditMachineModal
               machine={editing}
+              allMachines={allMachines}
               onCancel={() => setEditing(null)}
               onSaved={(updated) => { setEditing(null); applyMachineUpsert(updated) }}
               onDeleted={(id) => { setEditing(null); applyMachineDelete(id) }}

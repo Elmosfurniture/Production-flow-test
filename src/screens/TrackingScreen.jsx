@@ -8,6 +8,7 @@ import {
   buildOrderTracking, distributeQtyAcrossRows, setStepQtyDone,
   rescheduleOrderLeftovers, cleanupDoneStepPhantoms,
 } from '../lib/tracking'
+import { buildOrderCheckpoints } from '../lib/checkpoints'
 import { markReadyForDispatch } from '../lib/orders'
 import { supabase } from '../lib/supabase'
 import { isoWeek, isoWeekDayToDate } from '../lib/scheduling'
@@ -53,9 +54,9 @@ html, body {
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
   background: radial-gradient(120% 80% at 50% 0%, var(--surface-2) 0%, var(--bg) 40%, var(--bg-2) 100%);
 }
-.main { padding: 18px 22px 30px; min-width: 0; }
-.topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
-.topbar h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin: 0; line-height: 1.1; }
+.main { padding: 14px 20px 26px; min-width: 0; }
+.topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 10px; }
+.topbar h1 { font-size: 21px; font-weight: 600; letter-spacing: -0.025em; margin: 0; line-height: 1.1; }
 .topbar .sub { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
 .topbar-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .ibtn { appearance: none; border: 1px solid var(--hairline-2); background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 500; padding: 7px 11px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(26,29,36,0.04); }
@@ -104,58 +105,58 @@ html, body {
 .search-box .search-count { font-size: 11px; font-weight: 600; color: var(--ink-3); white-space: nowrap; flex-shrink: 0; }
 .search-box .search-clear { appearance: none; border: 0; background: var(--surface-2); color: var(--ink-3); border-radius: 999px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; padding: 0; }
 .search-box .search-clear:hover { background: var(--hairline-2); color: var(--ink); }
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
-.stat { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 12px 14px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: 4px; }
-.stat .l { font-size: 10px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
-.stat .v { font-size: 22px; font-weight: 700; letter-spacing: -0.025em; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+.stat { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 8px 12px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: 2px; }
+.stat .l { font-size: 9px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
+.stat .v { font-size: 18px; font-weight: 700; letter-spacing: -0.025em; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.1; }
 .stat .v small { font-size: 12px; font-weight: 500; color: var(--ink-3); margin-left: 4px; }
-.stat .d { font-size: 11px; color: var(--ink-2); display: flex; align-items: center; gap: 5px; }
+.stat .d { font-size: 10px; color: var(--ink-2); display: flex; align-items: center; gap: 5px; }
 .stat .d .pos { color: var(--green); font-weight: 600; }
 .stat .d .neg { color: var(--red); font-weight: 600; }
 .stat.accent-amber { border-left: 3px solid var(--amber); }
 .stat.accent-green { border-left: 3px solid var(--green); }
 .stat.accent-blue { border-left: 3px solid var(--blue); }
 .stat.accent-red { border-left: 3px solid var(--red); }
-.ord-list { display: flex; flex-direction: column; gap: 12px; }
+.ord-list { display: flex; flex-direction: column; gap: 7px; }
 .ord-empty { padding: 36px 22px; text-align: center; color: var(--ink-3); font-size: 13px; background: var(--surface); border: 1px dashed var(--hairline-2); border-radius: var(--r-md); }
 .ord-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-md); box-shadow: var(--shadow-card); overflow: hidden; }
-.ord-head { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; padding: 14px 16px; align-items: center; cursor: pointer; background: var(--surface); transition: background 120ms ease; }
+.ord-head { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; padding: 8px 12px; align-items: center; cursor: pointer; background: var(--surface); transition: background 120ms ease; }
 .ord-head:hover { background: var(--surface-2); }
-.ord-head .pri { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--amber-soft); color: var(--amber); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ord-head .pri { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; background: var(--amber-soft); color: var(--amber); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .ord-head .pri.p1 { background: var(--red-soft); color: var(--red); }
 .ord-head .pri.p2 { background: var(--red-soft); color: var(--red); }
 .ord-head .pri.p5 { background: var(--amber-soft); color: var(--amber); }
 .ord-head .info { min-width: 0; }
-.ord-head .info .top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.ord-head .info .ord-num { font-size: 13px; font-weight: 700; color: var(--ink-3); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
-.ord-head .info .name { font-size: 17px; font-weight: 600; color: var(--ink); letter-spacing: -0.015em; }
+.ord-head .info .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ord-head .info .ord-num { font-size: 12px; font-weight: 700; color: var(--ink-3); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+.ord-head .info .name { font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: -0.015em; }
 .wk-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--blue-soft); color: var(--blue); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.02em; }
 .wk-chip.late { background: var(--red-soft); color: var(--red); }
 .wk-chip.next { background: var(--green-soft); color: var(--green); }
 .ord-head .info .meta { margin-top: 4px; font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .ord-head .info .meta .sep { color: var(--hairline-2); }
 .ord-head .info .meta .cust { color: var(--ink-2); font-weight: 500; }
-.ord-head .info .progress { margin-top: 8px; display: flex; align-items: center; gap: 10px; }
-.progress-bar { flex: 1; height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; position: relative; }
+.ord-head .info .progress { margin-top: 5px; display: flex; align-items: center; gap: 10px; }
+.progress-bar { flex: 1; height: 5px; background: var(--surface-3); border-radius: 3px; overflow: hidden; position: relative; }
 .progress-bar i { display: block; height: 100%; background: var(--amber); border-radius: 3px; transition: width 200ms ease; }
 .progress-bar.done i { background: var(--green); }
 .progress-bar.behind i { background: var(--red); }
 .progress-text { font-size: 11px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; min-width: 60px; }
 .ord-head .right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .ord-head .right .wkdone { font-size: 10px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.06em; }
-.ord-head .right .qty { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
+.ord-head .right .qty { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .ord-head .right .qty small { font-size: 11px; font-weight: 600; color: var(--ink-3); margin-left: 2px; }
 .ord-head .chev { width: 24px; height: 24px; border-radius: 6px; color: var(--ink-3); display: flex; align-items: center; justify-content: center; transition: transform 180ms ease, background 120ms ease; }
 .ord-head:hover .chev { background: var(--surface-3); color: var(--ink); }
 .ord-card.expanded .ord-head .chev { transform: rotate(90deg); }
-.steps { border-top: 1px solid var(--hairline); background: var(--surface-2); padding: 4px 0; display: none; }
+.steps { border-top: 1px solid var(--hairline); background: var(--surface-2); padding: 2px 0; display: none; }
 .ord-card.expanded .steps { display: block; }
-.step { display: grid; grid-template-columns: 28px 26px 1fr auto auto auto; gap: 12px; align-items: center; padding: 10px 16px 10px 52px; border-top: 1px solid var(--hairline); cursor: pointer; position: relative; transition: background 120ms ease; }
+.step { display: grid; grid-template-columns: 24px 22px 1fr auto auto auto; gap: 10px; align-items: center; padding: 6px 12px 6px 44px; border-top: 1px solid var(--hairline); cursor: pointer; position: relative; transition: background 120ms ease; }
 .step:first-child { border-top: 0; }
 .step:hover { background: var(--surface); }
-.step .ply { width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: var(--ink-3); transition: transform 180ms ease; }
+.step .ply { width: 20px; height: 20px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: var(--ink-3); transition: transform 180ms ease; }
 .step.open .ply { transform: rotate(90deg); }
-.step .num { width: 22px; height: 22px; border-radius: 6px; background: var(--amber-soft); color: var(--amber); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.step .num { width: 20px; height: 20px; border-radius: 6px; background: var(--amber-soft); color: var(--amber); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .step.done .num { background: var(--green-soft); color: var(--green); }
 .step.partial .num { background: var(--amber-soft); color: var(--amber); }
 .step .label { font-size: 13px; font-weight: 500; color: var(--ink); }
@@ -185,7 +186,7 @@ html, body {
 .mach-ctrl { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
 
 .mach-list { background: var(--surface-3); border-top: 1px solid var(--hairline); padding: 2px 0; }
-.mach-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 14px; align-items: center; padding: 6px 16px 6px 100px; border-top: 1px solid var(--hairline); transition: background 120ms ease; font-size: 12px; min-height: 42px; }
+.mach-row { display: grid; grid-template-columns: 20px 1fr auto; gap: 12px; align-items: center; padding: 3px 12px 3px 88px; border-top: 1px solid var(--hairline); transition: background 120ms ease; font-size: 12px; min-height: 36px; }
 .mach-row:first-child { border-top: 0; }
 .mach-row:hover { background: var(--surface-2); }
 .mach-row .seq { width: 20px; height: 20px; border-radius: 5px; background: rgba(31,42,68,0.08); color: var(--navy); font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
@@ -199,20 +200,20 @@ html, body {
 .resched-pill {
   appearance: none; border: 1px solid rgba(70,119,200,0.32);
   background: var(--blue-soft); color: var(--blue);
-  border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 11px; font-weight: 700;
-  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 10px; font-weight: 700;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 .resched-pill:hover { background: var(--blue); color: white; border-color: var(--blue); }
 .resched-pill:disabled { opacity: 0.5; cursor: wait; }
 .ready-pill {
   appearance: none; border: 1px solid rgba(76,175,106,0.32);
   background: var(--green-soft); color: var(--green);
-  border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 11px; font-weight: 700;
-  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 10px; font-weight: 700;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 .ready-pill:hover { background: var(--green); color: white; border-color: var(--green); }
 .ready-pill:disabled { opacity: 0.5; cursor: wait; }
@@ -222,6 +223,17 @@ html, body {
   font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
   letter-spacing: 0.04em; text-transform: uppercase;
 }
+
+/* ── Checkpoints ─────────────────────────────────────────────────────────
+   A checkpoint is a named group of machines (set per machine on the Machines
+   screen). Each chip rolls up one group for this order: how many of the parts
+   that pass through those machines are completely through them. Ordered along
+   the flow, so reading left → right shows how far the product has travelled. */
+.cp-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+.cp-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--ink-3); white-space: nowrap; line-height: 1.5; }
+.cp-chip .n { font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+.cp-chip.partial { background: var(--amber-soft); color: var(--amber); }
+.cp-chip.done { background: var(--green-soft); color: var(--green); }
 
 .rs-modal-back { position: fixed; inset: 0; background: rgba(20,24,32,0.55); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
 .rs-modal { background: var(--surface); border-radius: var(--r-lg); box-shadow: 0 20px 60px rgba(0,0,0,0.25); max-width: 520px; width: 100%; padding: 22px 24px; max-height: 90vh; display: flex; flex-direction: column; }
@@ -270,9 +282,9 @@ html, body {
      zoom in when it's focused. */
   .search-box { flex: 1 1 100%; max-width: none; order: -1; padding: 9px 12px; }
   .search-box input { font-size: 16px; }
-  .ord-head { padding: 12px 12px; gap: 8px; }
-  .step { padding: 10px 10px 10px 14px; gap: 8px; }
-  .mach-row { padding: 8px 10px 8px 16px; gap: 8px; }
+  .ord-head { padding: 8px 10px; gap: 8px; }
+  .step { padding: 6px 10px 6px 12px; gap: 8px; }
+  .mach-row { padding: 4px 10px 4px 14px; gap: 8px; }
   .mach-row .name { font-size: 12px; }
   .mach-row .pill { min-width: 48px; padding: 4px 7px; }
 
@@ -441,8 +453,35 @@ function PartRow({ partView, index, defaultOpen, onStepperChange, onPartDone }) 
   )
 }
 
+// One chip per checkpoint: "✓ Cutting" when every part is through the group,
+// "5/7 Cutting" while it's still in progress.
+function CheckpointRow({ checkpoints }) {
+  if (!checkpoints || checkpoints.length === 0) return null
+  return (
+    <div className="cp-row">
+      {checkpoints.map((c) => {
+        const cls = c.complete ? 'done' : c.done > 0 ? 'partial' : ''
+        return (
+          <span
+            key={c.name}
+            className={`cp-chip ${cls}`}
+            title={c.complete
+              ? `${c.name} — all ${c.total} part(s) through this checkpoint`
+              : `${c.name} — ${c.done} of ${c.total} part(s) through this checkpoint`}
+          >
+            {c.complete
+              ? <Check size={10} strokeWidth={3} />
+              : <span className="n">{c.done}/{c.total}</span>}
+            {c.name}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 function OrderCard({
-  tracking, order, defaultOpen, currentWeek, leftoverSteps,
+  tracking, order, defaultOpen, currentWeek, leftoverSteps, checkpoints,
   productionComplete, markReadySaving,
   onStepperChange, onPartDone, onOpenReschedule, onMarkReady,
 }) {
@@ -486,6 +525,7 @@ function OrderCard({
             </div>
             <span className="progress-text">{tracking.doneUnits}/{tracking.totalUnits} done</span>
           </div>
+          <CheckpointRow checkpoints={checkpoints} />
         </div>
         <div className="right">
           <span className="wkdone">{wkdone}</span>
@@ -842,14 +882,15 @@ export default function TrackingScreen() {
         const tracking = buildOrderTracking({
           order: o, parts, stepsByPart, scheduleByOrderStep, machineById,
         })
-        return { order: o, tracking }
+        const checkpoints = buildOrderCheckpoints({ tracking, machineByName })
+        return { order: o, tracking, checkpoints }
       })
       .sort((a, b) => {
         const aCr = a.order.cr ?? Infinity
         const bCr = b.order.cr ?? Infinity
         return aCr - bCr
       })
-  }, [baseFiltered, prodDate, prodYear, productByCode, partsByProduct, stepsByPart, scheduleByOrderStep])
+  }, [baseFiltered, prodDate, prodYear, productByCode, partsByProduct, stepsByPart, scheduleByOrderStep, machineById, machineByName])
 
   const stats = useMemo(() => {
     const ordersActive = visible.length
@@ -1125,7 +1166,7 @@ export default function TrackingScreen() {
             </div>
           ) : (
             <div className="ord-list">
-              {visible.map(({ order, tracking }, i) => {
+              {visible.map(({ order, tracking, checkpoints }, i) => {
                 const leftoverSteps = []
                 for (const pt of tracking.parts) {
                   for (const sv of pt.steps) {
@@ -1146,6 +1187,7 @@ export default function TrackingScreen() {
                     defaultOpen={query.trim() ? true : (expandSignal.at ? expandSignal.all : i < 2)}
                     currentWeek={currentWeek}
                     leftoverSteps={leftoverSteps}
+                    checkpoints={checkpoints}
                     productionComplete={productionComplete}
                     markReadySaving={markReadyId === order.id}
                     onStepperChange={handleStepperChange}

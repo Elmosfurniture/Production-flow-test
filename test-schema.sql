@@ -40,6 +40,7 @@ create table machines (
   display_order   integer default 0,
   rate_per_hour   numeric,
   wood_day        smallint,
+  checkpoint      text,
   color           text,
   created_at      timestamptz default now()
 );

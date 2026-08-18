@@ -103,6 +103,7 @@ async function insertIfMissing(name, department, extra = {}) {
   if (extra.bottleneck != null) payload.bottleneck = extra.bottleneck
   if (extra.setup_time_min != null) payload.setup_time_min = Math.max(0, Number(extra.setup_time_min) || 0)
   if (extra.wood_day != null) payload.wood_day = Math.max(0, Math.min(4, Number(extra.wood_day) || 0))
+  if (extra.checkpoint != null) payload.checkpoint = String(extra.checkpoint).trim() || null
 
   const { data, error } = await supabase
     .from('machines')
@@ -162,7 +163,7 @@ export async function addMachine(name, department, opts = {}) {
   await supabase.from('machines').update({ display_order: nextPos }).eq('id', row.id)
   const { data, error } = await supabase
     .from('machines')
-    .select('id, name, department, color, area, bottleneck, active, display_order, setup_time_min, rate_per_hour, wood_day')
+    .select('id, name, department, color, area, bottleneck, active, display_order, setup_time_min, rate_per_hour, wood_day, checkpoint')
     .eq('id', row.id)
     .single()
   if (error) return row
@@ -192,7 +193,7 @@ export async function updateMachine(id, patch) {
     .from('machines')
     .update(patch)
     .eq('id', id)
-    .select('id, name, department, color, area, bottleneck, active, display_order, setup_time_min, rate_per_hour, wood_day')
+    .select('id, name, department, color, area, bottleneck, active, display_order, setup_time_min, rate_per_hour, wood_day, checkpoint')
     .single()
   if (error) throw new Error(`Updating machine: ${error.message}`)
   return data
