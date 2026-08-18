@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar'
 import TopbarActions from '../components/TopbarActions'
 import { addMachine, updateMachine, deleteMachine, reorderMachines } from '../lib/seedMachines'
 import { canEdit, getCurrentUser } from '../lib/auth'
-import { checkpointNames } from '../lib/checkpoints'
+import { checkpointNames, normalizeCheckpoint } from '../lib/checkpoints'
 import { useConfirm } from '../components/ConfirmDialog'
 import { useAppData } from '../store/AppDataContext'
 import {
@@ -201,10 +201,12 @@ html, body {
 .edit-card .e-err { font-size: 12px; color: var(--red); }
 .edit-card .bn-toggle { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 500; color: var(--ink-2); cursor: pointer; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--hairline-2); border-radius: 10px; }
 .edit-card .bn-toggle input { width: 16px; height: 16px; accent-color: var(--navy); cursor: pointer; }
-.edit-card .cp-picks { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-.edit-card .cp-pick { appearance: none; border: 1px solid var(--hairline-2); background: var(--surface-2); color: var(--ink-2); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; }
-.edit-card .cp-pick:hover { background: var(--teal-soft); color: var(--teal); border-color: rgba(58,154,175,0.35); }
-.edit-card .cp-pick.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+/* Preset checkpoint pills — shared by the Add form and the Edit modal, so a
+   machine joins an existing group with one click instead of retyping it. */
+.cp-picks { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.cp-pick { appearance: none; border: 1px solid var(--hairline-2); background: var(--surface-2); color: var(--ink-2); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.cp-pick:hover { background: var(--teal-soft); color: var(--teal); border-color: rgba(58,154,175,0.35); }
+.cp-pick.on { background: var(--teal); color: #fff; border-color: var(--teal); }
 `
 
 // UI tab id → value stored in `machines.department`.
@@ -338,7 +340,7 @@ function EditMachineModal({ machine, allMachines, onCancel, onSaved, onDeleted }
     color !== (machine.color || DEFAULT_COLOR) ||
     bottleneck !== Boolean(machine.bottleneck) ||
     setupTime !== (Number(machine.setup_time_min) || 0) ||
-    checkpoint.trim() !== (machine.checkpoint || '').trim() ||
+    normalizeCheckpoint(checkpoint) !== normalizeCheckpoint(machine.checkpoint) ||
     (isWood && (woodDay === '' ? null : Number(woodDay)) !== (machine.wood_day ?? null)) ||
     (isBoss && (rate === '' ? null : Math.max(0, Number(rate) || 0)) !== (machine.rate_per_hour ?? null))
   const busy = saving || deleting
@@ -356,7 +358,7 @@ function EditMachineModal({ machine, allMachines, onCancel, onSaved, onDeleted }
       color,
       bottleneck,
       setup_time_min: Math.max(0, Number(setupTime) || 0),
-      checkpoint: checkpoint.trim() || null,
+      checkpoint: normalizeCheckpoint(checkpoint),
     }
     // Wood machines carry a conveyor day; other depts ignore the column.
     if (isWood) patch.wood_day = woodDay === '' ? null : Number(woodDay)
@@ -447,20 +449,18 @@ function EditMachineModal({ machine, allMachines, onCancel, onSaved, onDeleted }
           <datalist id={`cp-list-${machine.id}`}>
             {cpOptions.map((c) => <option key={c} value={c} />)}
           </datalist>
-          {cpOptions.length > 0 && (
-            <div className="cp-picks">
-              {cpOptions.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`cp-pick ${checkpoint.trim() === c ? 'on' : ''}`}
-                  onClick={() => setCheckpoint(checkpoint.trim() === c ? '' : c)}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="cp-picks">
+            {cpOptions.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={`cp-pick ${normalizeCheckpoint(checkpoint) === c ? 'on' : ''}`}
+                onClick={() => setCheckpoint(normalizeCheckpoint(checkpoint) === c ? '' : c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
           <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>
             Machines sharing a checkpoint name form one group. Tracking shows how many parts of an order are through the whole group.
           </div>
@@ -663,7 +663,7 @@ export default function MachinesScreen() {
         bottleneck: formBottleneck,
         setup_time_min: formSetupTime,
         wood_day: dbDept === 'wood' && formWoodDay !== '' ? Number(formWoodDay) : null,
-        checkpoint: formCheckpoint.trim() || null,
+        checkpoint: normalizeCheckpoint(formCheckpoint),
       })
       setFormName('')
       setFormArea('')
@@ -769,6 +769,18 @@ export default function MachinesScreen() {
                 <datalist id="cp-list-add">
                   {cpOptions.map((c) => <option key={c} value={c} />)}
                 </datalist>
+                <div className="cp-picks">
+                  {cpOptions.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`cp-pick ${normalizeCheckpoint(formCheckpoint) === c ? 'on' : ''}`}
+                      onClick={() => setFormCheckpoint(normalizeCheckpoint(formCheckpoint) === c ? '' : c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="field">
                 <label>Colour</label>
